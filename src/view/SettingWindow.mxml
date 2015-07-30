@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   width="470"
+			   height="130"
+			   creationComplete="init(event)"
+			   close="closeHandler(event)"
+			   title="设置">
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+			import mx.events.CloseEvent;
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+
+			import core.Config;
+			import manager.EventManager;
+			import core.data.ViewConfig;
+
+			import utils.FilesUtil;
+
+			protected function init(event : FlexEvent) : void
+			{
+				x = (Config.stage.stageWidth - width) * .5;
+				y = (Config.stage.stageHeight - height) * .5;
+
+				var bytes : ByteArray = FilesUtil.getBytesFromeFile(Config.view.url, true);
+				var data : ViewConfig = ViewConfig.parse(bytes, true);
+				txt_width.text = data.width + "";
+				txt_height.text = data.height + "";
+				txt_name.text = data.class_name;
+
+				comBox_extends.textInput.editable = false;
+				var xmllist : XMLList = Config.getXmlByType("extends")[0].field;
+				var dataList : Array = [];
+				var selectedIndex : int;
+				for each (var xml : XML in xmllist)
+				{
+					if (xml.@name.toString() == data.extends_name)
+						selectedIndex = dataList.length;
+					dataList.push({type: xml.@name.toString().split(".").pop(), extends_name: xml.@name.toString()});
+				}
+				comBox_extends.dataProvider = new ArrayCollection(dataList);
+				comBox_extends.selectedIndex = selectedIndex;
+			}
+
+			protected function closeHandler(event : CloseEvent = null) : void
+			{
+				PopUpManager.removePopUp(this);
+			}
+
+			protected function button1_clickHandler(event : MouseEvent) : void
+			{
+				var file : File = new File(Config.view.url);
+				file.exists && file.deleteFile();
+				var data : ViewConfig = Config.view;
+				data.width = int(txt_width.text);
+				data.height = int(txt_height.text);
+				data.class_name = txt_name.text;
+				data.extends_name = comBox_extends.selectedItem.extends_name;
+				EventManager.dispatch(EventManager.SAVE_VIEW);
+				EventManager.dispatch(EventManager.SHOW_VIEW_TREE);
+				closeHandler();
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<s:VGroup paddingTop="10"
+			  paddingLeft="10">
+		<s:HGroup>
+			<s:Label text="类名:"
+					 paddingTop="6"/>
+			<s:TextInput id="txt_name"
+						 width="150"/>
+			<s:Label text="继承类："
+					 fontSize="13"
+					 paddingTop="4"/>
+			<s:ComboBox fontSize="13"
+						width="200"
+						maxChars="16"
+						id="comBox_extends"
+						labelField="type"/>
+		</s:HGroup>
+		<s:HGroup>
+			<s:Label text="宽    :"
+					 paddingTop="6"/>
+			<s:TextInput id="txt_width"
+						 width="150"/>
+
+			<s:Label text="  高:"
+					 paddingLeft="80"
+					 paddingTop="6"/>
+			<s:TextInput id="txt_height"
+						 width="150"/>
+		</s:HGroup>
+		<s:Button width="100%"
+				  height="25"
+				  label="修     改"
+				  click="button1_clickHandler(event)"/>
+	</s:VGroup>
+</s:TitleWindow>

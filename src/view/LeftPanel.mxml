@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009"
+		   xmlns:s="library://ns.adobe.com/flex/spark"
+		   xmlns:mx="library://ns.adobe.com/flex/mx"
+		   creationComplete="init(event)"
+		   backgroundColor="0x666666"
+		   xmlns:view="view.*">
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.events.ListEvent;
+			
+			import core.Config;
+			import core.ExEvent;
+			import core.data.ViewConfig;
+			
+			import manager.EventManager;
+			
+			import utils.FilesUtil;
+			
+			import view.component.CLoading;
+
+			[Bindable]
+			public static var classArray : Array = [];
+			[Bindable]
+			private var fileXml : XML;
+			private var container : Sprite;
+
+			protected function init(event : FlexEvent) : void
+			{
+				container = new Sprite();
+				uiComponent.addChild(container);
+				EventManager.addListener(EventManager.SHOW_VIEW_TREE, onShowViewHanlder);
+				EventManager.addListener(EventManager.SHOW_COMPONENT, onShowComponentHanlder);
+				EventManager.addListener(EventManager.EVENT_RES_COMPLETE, onComplete);
+			}
+
+			private function onComplete(evt : ExEvent) : void
+			{
+				while (container.numChildren > 0)
+					container.removeChildAt(0);
+			}
+
+			private function onShowViewHanlder(evt : Event) : void
+			{
+				var file : File = new File(Config.url_project);
+				if (!file.exists)
+				{
+					Alert.show("项目不存在，无法创建界面列表!");
+					return;
+				}
+				var index : int = 0;
+				fileXml = <root label={file.name}/>;
+				createTree(file, fileXml, true);
+
+				function createTree(file : File, xml : XML, isRoot : Boolean) : void
+				{
+					var list : Array = file.getDirectoryListing();
+					var len : int = list.length;
+					if (len == 0)
+						return;
+					var tmp_file : File;
+					var tmp_xml : XML = isRoot ? xml : <node label={file.name}/>;
+					for (var i : int = 0; i < len; i++)
+					{
+						tmp_file = list[i];
+						if (tmp_file.isDirectory)
+						{
+							createTree(tmp_file, tmp_xml, false);
+							continue;
+						}
+						if (tmp_file.name.indexOf(".ui") == -1 || tmp_file.name.indexOf(".uip") >= 0)
+							continue;
+						tmp_xml.appendChild(<node label={tmp_file.name} nativePath={tmp_file.nativePath}/>);
+						index++;
+					}
+
+					!isRoot && fileXml.appendChild(tmp_xml);
+				}
+				view_tree.labelField = "@label";
+				if (index > 0)
+				{
+					tree_panel.title = "项目 : " + file.name;
+					view_tree.dataProvider = fileXml;
+				}
+				else
+				{
+					tree_panel.title = "页面";
+					view_tree.dataProvider = null;
+				}
+				view_tree.validateNow();
+				view_tree.selectedIndex = 0;
+				view_tree.expandChildrenOf(view_tree.selectedItem, true);
+			}
+
+			private function onItemClickHanlder(evt : ListEvent) : void
+			{
+				var open_url : String = evt.itemRenderer.data.@label;
+				if (open_url.indexOf(".ui") == -1)
+				{
+					var len : int = view_tree.openItems.length;
+					for (var i : int = 0; i < len; i++)
+					{
+						if (view_tree.selectedItem == view_tree.openItems[i])
+							continue;
+						view_tree.expandChildrenOf(view_tree.openItems[i], false);
+					}
+					view_tree.expandChildrenOf(view_tree.selectedItem, view_tree.isItemOpen(view_tree.selectedItem) ? false : true);
+					return;
+				}
+				CLoading.getInstance().show();
+				var url : String = evt.itemRenderer.data.@nativePath;
+				var bytes : ByteArray = FilesUtil.getBytesFromeFile(url, true);
+				Config.view = ViewConfig.parse(bytes, true);
+				EventManager.getInstance().dispatch(EventManager.SHOW_VIEW);
+			}
+
+			private function onShowComponentHanlder(evt : ExEvent) : void
+			{
+				while (container.numChildren > 0)
+					container.removeChildAt(0);
+				var xml : XML = evt.data as XML;
+				var name : String = xml.@label;
+				var child : DisplayObject = Config.createComponetByName(name);
+				container.addChild(child); 
+				var scale : Number = 1;
+				if (child.width > uiComponent.width)
+					scale = uiComponent.width / child.width;
+				else if (child.height > uiComponent.height)
+					scale = uiComponent.height / child.height;
+				else
+				{
+					scale = uiComponent.height / child.height;
+					if (child.width * scale > uiComponent.width)
+						scale = uiComponent.width / (child.width * scale);
+					else if (child.height * scale > uiComponent.height)
+						scale = uiComponent.height / (child.height * scale);
+				}
+
+				var childx : int = 0, childy : int = 0;
+				if (child is DisplayObjectContainer)
+				{
+					var len : int = DisplayObjectContainer(child).numChildren;
+					var tmp_child : DisplayObject;
+
+					for (var i : int = 0; i < len; i++)
+					{
+						tmp_child = DisplayObjectContainer(child).getChildAt(i);
+						if (tmp_child.x < childx)
+							childx = tmp_child.x;
+						if (tmp_child.y < childy)
+							childy = tmp_child.y;
+					}
+				}
+				child.scaleX = child.scaleY = scale;
+				child.x = (uiComponent.width - child.width * scale - childx) * 0.5;
+				child.y = (uiComponent.height - child.height * scale - childy) * 0.5;
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+
+	<s:VGroup width="100%"
+			  height="100%">
+		<!--文件目录-->
+		<s:Panel title="页面"
+				 width="100%"
+				 height="50%"
+				 id="tree_panel">
+			<mx:Tree width="100%"
+					 height="100%"
+					 id="view_tree"
+					 showRoot="false"
+					 itemClick="onItemClickHanlder(event)"/>
+		</s:Panel>
+		<!--显示对象-->
+		<s:Panel title="显示"
+				 width="100%"
+				 height="25%">
+			<mx:UIComponent width="100%"
+							height="100%"
+							id="uiComponent"/>
+		</s:Panel>
+		<view:ResourcePanel/>
+	</s:VGroup>
+</mx:Canvas>

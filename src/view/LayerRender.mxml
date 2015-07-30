@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:ItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009"
+				xmlns:s="library://ns.adobe.com/flex/spark"
+				xmlns:mx="library://ns.adobe.com/flex/mx"
+				width="100%"
+				height="30"
+				creationComplete="init(event)">
+	<fx:Script>
+		<![CDATA[
+			import view.component.CLayerView;
+			import mx.events.FlexEvent;
+
+			import spark.events.TextOperationEvent;
+
+			import core.data.LayerData;
+
+			private var layer : LayerData;
+
+			protected function init(event : FlexEvent) : void
+			{
+
+			}
+
+
+			override public function set data(value : Object) : void
+			{
+				super.data = value;
+				layer = value as LayerData;
+				if (layer == null)
+					return;
+				txt_text.text = layer.name;
+				check_show.selected = layer.visible;
+				check_lock.selected = layer.lock;
+				txt_num.text = layer.layer.numChildren == 0 ? "空" : "" + layer.layer.numChildren;
+			}
+
+			protected function check_show_clickHandler(event : MouseEvent) : void
+			{
+				if (layer == null)
+					return;
+				layer.visible = check_show.selected;
+			}
+
+			protected function check_lock_clickHandler(event : MouseEvent) : void
+			{
+				if (layer == null)
+					return;
+				layer.lock = check_lock.selected;
+			}
+
+			protected function check_delete_clickHandler(event : MouseEvent) : void
+			{
+				if (layer == null)
+					return;
+				CLayerView.getInstance().removeLayer(layer);
+			}
+
+			protected function txt_text_changeHandler(event : TextOperationEvent) : void
+			{
+				layer.name = txt_text.text;
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<s:HGroup paddingTop="4"
+			  paddingLeft="4">
+		<s:TextInput id="txt_text"
+					 width="85"
+					 paddingTop="4"
+					 change="txt_text_changeHandler(event)"/>
+		<s:CheckBox id="check_show"
+					label="显"
+					selected="true"
+					click="check_show_clickHandler(event)"/>
+		<s:CheckBox id="check_lock"
+					label="锁"
+					click="check_lock_clickHandler(event)"/>
+		<s:Label id="txt_num"
+				 paddingTop="6"
+				 paddingLeft="6"
+				 width="35"/>
+	</s:HGroup>
+</s:ItemRenderer>

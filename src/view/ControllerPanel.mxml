@@ -1,0 +1,706 @@
+<s:Panel xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 addedToStage="init(event)"
+		 title="操作">
+	<fx:Script>
+		<![CDATA[
+			import flash.utils.setTimeout;
+
+			import mx.collections.ArrayCollection;
+			import mx.core.UIComponent;
+			import mx.events.DragEvent;
+			import mx.events.ItemClickEvent;
+			import mx.managers.DragManager;
+
+			import spark.components.VGroup;
+			import spark.events.IndexChangeEvent;
+
+			import core.CodeUtils;
+			import core.Config;
+			import core.ExEvent;
+			import core.data.LayerData;
+			import core.data.ViewBase;
+
+			import manager.ComponentManager;
+			import manager.EventManager;
+			import manager.HistoryManager;
+
+			import view.component.CLayerView;
+			import view.component.CSprite;
+
+
+
+
+
+
+
+
+
+			[Bindable]
+			public var STATE_ARRAY : Array = ["视图", "代码"];
+			[Bindable]
+			public var SACLE_ARRAY : Array = ["25%", "50%", "100%", "200%", "400%", "800%"];
+			private var layer : CLayerView;
+			private var img_bg : Bitmap = new Bitmap();
+			private var img_source : Bitmap = new Bitmap();
+			private var isDraw : Boolean = false;
+			private var isMove : Boolean = false;
+			private var isOver : Boolean = false;
+			private var isMoveUi : Boolean = false;
+			private var drag_canvas : Shape = new Shape();
+			private var ui : UIComponent;
+			private var start_x : int;
+			private var start_y : int;
+			private var shiftKey : Boolean;
+			private var selectData : ComponentManager;
+
+			protected function init(event : Event) : void
+			{
+				var group : VGroup = new VGroup();
+				group.addElement(m_group);
+				controlBarContent = [group];
+				controlBarVisible = true;
+
+				selectData = ComponentManager.Ins();
+				txt_code.visible = false;
+				combox.dataProvider = new ArrayCollection(SACLE_ARRAY);
+				layer = CLayerView.getInstance();
+				ui = new UIComponent();
+				ui.addChild(drag_canvas);
+				canvas.addChildAt(ui, 0);
+				ui = new UIComponent();
+				ui.addChild(img_bg);
+				ui.addChild(img_source);
+				ui.addChild(layer);
+				canvas.addChildAt(ui, 0);
+
+				canvas.graphics.beginFill(0x333333, 0);
+				canvas.graphics.drawRect(0, 0, Config.stage.fullScreenWidth, Config.stage.fullScreenHeight);
+				canvas.graphics.endFill();
+
+				canvas.addEventListener(MouseEvent.MOUSE_DOWN, onStageDown);
+				canvas.addEventListener(MouseEvent.MOUSE_MOVE, onStageMove);
+				canvas.addEventListener(MouseEvent.MOUSE_UP, onStageUp);
+				addEventListener(MouseEvent.ROLL_OVER, onRollOver);
+				addEventListener(MouseEvent.ROLL_OUT, onRollOut);
+				EventManager.addListener(EventManager.SHOW_VIEW, onShowViewHandler, false, 1);
+				EventManager.addListener(EventManager.EVENT_RES_COMPLETE, initView);
+				EventManager.addListener(EventManager.CHANGE_COMPONENT, onChangeComponent);
+				addEventListener(NativeDragEvent.NATIVE_DRAG_ENTER, onDragInHandler);
+				addEventListener(NativeDragEvent.NATIVE_DRAG_DROP, onDropHandler);
+				addEventListener(Event.ENTER_FRAME, onUpdate);
+			}
+
+			private function onUpdate(evt : Event) : void
+			{
+				if (!txt_code.visible && isOver)
+					Config.stage.focus = Config.stage;
+				updateRightField();
+				updateStatus();
+			}
+
+			protected function onDragInHandler(event : NativeDragEvent) : void
+			{
+				var transferable : Clipboard = event.clipboard;
+
+				if (transferable.hasFormat(ClipboardFormats.FILE_LIST_FORMAT))
+				{
+					var files : Array = transferable.getData(ClipboardFormats.FILE_LIST_FORMAT) as Array;
+
+					if (!files)
+						return;
+					var file : File = File(files[0]);
+
+					if (file && (file.name.indexOf(".png") >= 0 || file.name.indexOf(".jpg") >= 0 || file.name.indexOf(".swf") >= 0))
+					{
+						NativeDragManager.acceptDragDrop(event.currentTarget as InteractiveObject);
+					}
+				}
+			}
+
+			protected function onDropHandler(event : NativeDragEvent) : void
+			{
+				var transferable : Clipboard = event.clipboard;
+
+				if (transferable.hasFormat(ClipboardFormats.FILE_LIST_FORMAT))
+				{
+					var files : Array = transferable.getData(ClipboardFormats.FILE_LIST_FORMAT) as Array;
+
+					if (!files)
+						return;
+					var file : File = File(files[0]);
+					var loader : Loader = new Loader();
+					var lc : LoaderContext = new LoaderContext(false, ApplicationDomain.currentDomain);
+					Config.appDomain = ApplicationDomain.currentDomain;
+					lc.allowCodeImport = true;
+					loader.contentLoaderInfo.addEventListener(Event.COMPLETE, onComplement);
+					loader.load(new URLRequest(file.nativePath));
+				}
+
+				function onComplement(evt : Event) : void
+				{
+					img_source.bitmapData = evt.target.content.bitmapData;
+				}
+			}
+
+			/**
+			 * 转换组件
+			 */
+			private function onChangeComponent(evt : ExEvent) : void
+			{
+				clearSelected();
+				var oldData : ViewBase = evt.data as ViewBase;
+				var display : CSprite = createComponent(oldData.res)
+				var newData : ViewBase = Config.view.create(oldData.res, display, oldData.swf, oldData.type, oldData.x, oldData.y, oldData.width, oldData.height);
+				newData.name = oldData.name;
+				newData.updateView();
+				layer.addComponent(display, oldData.layer_index);
+				selectData.push(display);
+				Config.view.deleteData(oldData);
+			}
+
+			/**
+			 * 加载资源完成
+			 * 初始化界面
+			 */
+			private function initView(evt : Event) : void
+			{
+				layer.selectIndex = 0;
+				parseView(Config.view.comList)
+			}
+
+			/**
+			 * 根据数据创建界面
+			 */
+			private function parseView(comLis : Vector.<ViewBase>) : void
+			{
+				var len : int = comLis.length;
+				var data : ViewBase;
+				var child : CSprite;
+				for (var i : int = 0; i < len; i++)
+				{
+					data = comLis[i];
+					child = createComponent(data.res);
+					if (child == null)
+					{
+						Config.alert("创建资源出错: " + data.res);
+						return;
+					}
+					layer.addComponent(child, data.layer_index);
+					child.data = data;
+					data.display = child;
+				}
+			}
+
+			/**
+			 * 显示界面操作
+			 */
+			protected function onShowViewHandler(evt : Event) : void
+			{
+				if (Config.view == null || !Config.view.class_name)
+				{
+					Config.alert("没有找到ui路径");
+					return;
+				}
+				clearSelected();
+				//清理历史记录
+				HistoryManager.Ins().removeHistory(null);
+				img_bg.bitmapData && img_bg.bitmapData.dispose();
+				img_bg.bitmapData = new BitmapData(Config.view.width, Config.view.height, false, 0x333333);
+				scaleCanvas(1);
+				combox.x = canvas.width - combox.width - 10;
+				txt_status.x = combox.x - txt_status.width - 20;
+				combox.selectedIndex = 0;
+				combox.selectedIndex = 2;
+				tabBar_itemClickHandler();
+				tabBar.visible = true;
+			}
+
+			/**
+			 * 回滚上次历史记录
+			 */
+			private function rollBackHistory() : void
+			{
+				if (HistoryManager.Ins().length == 0)
+					return;
+				clearSelected();
+				HistoryManager.Ins().rollBackHistory(excute);
+
+				function excute(viewData : ViewBase, dis_index : int) : void
+				{
+					if (viewData.display.parent == null)
+						Config.view.comList.push(viewData);
+					layer.addComponentAt(viewData.display, dis_index, viewData.layer_index);
+					selectData.push(viewData.display);
+				}
+			}
+
+			/**
+			 * 清理已经选中组件
+			 */
+			private function clearSelected() : void
+			{
+				selectData.removeAll();
+			}
+
+			/**
+			 * 更新组件属性
+			 */
+			private function updateAllComponent(field : String, value : int) : void
+			{
+				selectData.updateAllComponent(field, value);
+			}
+
+			protected function onKeyUpHandler(evt : KeyboardEvent) : void
+			{
+				shiftKey = false;
+				switch (evt.keyCode)
+				{
+					case Keyboard.SPACE:
+						isMoveUi = false;
+						break;
+				}
+			}
+
+			/**
+			 * 响应键盘事件
+			 */
+			protected function onKeyDownHandler(evt : KeyboardEvent) : void
+			{
+				var len : int, i : int, index : int;
+				var display : CSprite, viewDate : ViewBase;
+
+				if (tabBar.selectedIndex == 1)
+					return;
+				if (evt.ctrlKey)
+				{
+					switch (evt.keyCode)
+					{
+						//全选所有组件
+						case Keyboard.A:
+							selectData.selectAllComponent();
+							break;
+						//复制组件
+						case Keyboard.X:
+							selectData.cutComponent();
+							selectData.deleteSelect();
+							break;
+						case Keyboard.C:
+							selectData.copyComponent();
+							break;
+						//粘贴组件
+						case Keyboard.V:
+							selectData.pasteComponent(createComponent);
+							break;
+						//缩放舞台大小
+						case Keyboard.EQUAL:
+							scaleCanvas(ui.scaleX + 0.1);
+							break;
+						case Keyboard.MINUS:
+							scaleCanvas(ui.scaleX - 0.1);
+							break;
+						case Keyboard.BACKSPACE:
+						case Keyboard.DELETE:
+							scaleCanvas(1);
+							break;
+						//历史记录回滚
+						case Keyboard.Z:
+							rollBackHistory();
+							break;
+						//元件上下移动层级
+						case Keyboard.DOWN:
+							selectData.updateLayIndex(evt.shiftKey ? int.MIN_VALUE : 1);
+							break;
+						case Keyboard.UP:
+							selectData.updateLayIndex(evt.shiftKey ? int.MAX_VALUE : -1);
+							break;
+					}
+				}
+				else
+				{
+					switch (evt.keyCode)
+					{
+						case Keyboard.TAB:
+							clearSelected();
+							selectData.push(layer.getTabComponent());
+							break;
+						case Keyboard.LEFT:
+							updateAllComponent("x", -1);
+							break;
+						case Keyboard.RIGHT:
+							updateAllComponent("x", 1);
+							break;
+						case Keyboard.DOWN:
+							updateAllComponent("y", 1);
+							break;
+						case Keyboard.UP:
+							updateAllComponent("y", -1);
+							break;
+						//删除元件
+						case Keyboard.BACKSPACE:
+						case Keyboard.DELETE:
+							selectData.deleteSelect();
+							break;
+						case Keyboard.SPACE:
+							isMoveUi = true;
+							break;
+					}
+				}
+				if (evt.shiftKey && !evt.ctrlKey && evt.keyCode == Keyboard.SHIFT)
+				{
+					shiftKey = true;
+				}
+			}
+
+			/**
+			 * 从列表拖动组件到列表
+			 */
+			protected function dragDropHandler(evt : DragEvent) : void
+			{
+				clearSelected();
+				var xml : XML = evt.dragSource.dataForFormat("res") as XML;
+				var res_name : String = xml.@label;
+				var swf_name : String = xml.@swf;
+				var type : String = xml.@type;
+				var child : CSprite = createComponent(res_name);
+				if (child)
+				{
+					Config.view.create(res_name, child, swf_name, type, layer.mouseX, layer.mouseY);
+					layer.addComponent(child);
+					selectData.push(child);
+					selectData.addHistory(HistoryManager.ADD);
+				}
+			}
+
+			/**
+			 * 允许拖动
+			 */
+			private function enterHandler(evt : DragEvent) : void
+			{
+				if (layer.cur_layer && layer.cur_layer.visible)
+					DragManager.acceptDragDrop(canvas);
+			}
+
+			/**
+			 * 创建组件
+			 */
+			private function createComponent(res_name : String) : CSprite
+			{
+				var child : CSprite = Config.createComponetByName(res_name);
+				child.addEventListener(MouseEvent.MOUSE_DOWN, onComponentClick, false, 0, true);
+				child.addEventListener(MouseEvent.MOUSE_UP, onComponentUp, false, 0, true);
+				return child;
+			}
+
+			/**
+			 * 组件点击
+			 */
+			private function onComponentClick(evt : MouseEvent) : void
+			{
+				var child : CSprite = evt.currentTarget as CSprite;
+				var layData : LayerData = layer.getLayerByIndex(child.data.layer_index);
+				if (layData.lock || !layData.visible)
+					return;
+				//选中当前元件所在的图层
+				layer.selectItem = layData;
+				if (isMoveUi)
+					return;
+				isMove = false;
+				start_x = canvas.mouseX;
+				start_y = canvas.mouseY;
+
+				if (!shiftKey && selectData.length == 1)
+				{
+					clearSelected();
+				}
+				selectData.push(evt.currentTarget as CSprite);
+				setTimeout(addMoveListener, 0);
+
+				function addMoveListener() : void
+				{
+					canvas.addEventListener(MouseEvent.MOUSE_MOVE, onComponentMove);
+				}
+			}
+
+			private function onComponentMove(evt : MouseEvent) : void
+			{
+				if (isMoveUi)
+					return;
+				var len : int = selectData.length;
+				if (!evt.buttonDown || len == 0 || shiftKey)
+					return;
+				var display : CSprite;
+				for (var i : int = 0; i < len; i++)
+				{
+					display = selectData.getIndex(i);
+					if (display == null)
+						continue;
+					isMove = true;
+					display.x += (canvas.mouseX - start_x) / ui.scaleX;
+					display.y += (canvas.mouseY - start_y) / ui.scaleX;
+				}
+				start_x = canvas.mouseX;
+				start_y = canvas.mouseY;
+			}
+
+			private function onComponentUp(evt : MouseEvent) : void
+			{
+				if (isMoveUi)
+					return;
+				isMove && selectData.addHistory(HistoryManager.CHANGE);
+				canvas.removeEventListener(MouseEvent.MOUSE_MOVE, onComponentMove);
+				isMove = false;
+			}
+
+			private function scaleCanvas(scale : Number) : void
+			{
+				ui.scaleX = ui.scaleY = scale;
+				ui.x = (canvas.width - img_bg.width * scale) * .5;
+				ui.y = (canvas.height - img_bg.height * scale) * .5;
+				combox.textInput.text = int(ui.scaleX * 100) + "%";
+			}
+
+			/**
+			 * 视图/代码选择
+			 *
+			 */
+			protected function tabBar_itemClickHandler(event : ItemClickEvent = null) : void
+			{
+				txt_status.visible = combox.visible = canvas.visible = tabBar.selectedIndex == 0;
+				txt_code.visible = tabBar.selectedIndex == 1;
+				if (tabBar.selectedIndex == 1)
+					txt_code.text = CodeUtils.getAsCode(Config.view);
+			}
+
+			protected function combox_changeHandler(event : IndexChangeEvent) : void
+			{
+				scaleCanvas(int(combox.selectedItem.replace("%", "")) / 100);
+			}
+
+			private function onRollOver(evt : Event) : void
+			{
+				isOver = true;
+				Config.stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDownHandler);
+				Config.stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUpHandler);
+			}
+
+			private function onRollOut(evt : Event) : void
+			{
+				onStageUp(null);
+				isOver = isMoveUi = shiftKey = false;
+				Config.stage.removeEventListener(KeyboardEvent.KEY_DOWN, onKeyDownHandler);
+			}
+
+			/**
+			 * 鼠标按下
+			 */
+			private function onStageDown(evt : MouseEvent) : void
+			{
+				if (evt.target == canvas || evt.target == ui)
+				{
+					!shiftKey && clearSelected();
+					start_x = canvas.mouseX;
+					start_y = canvas.mouseY;
+					isDraw = true;
+				}
+				if (isMoveUi)
+				{
+					start_x = canvas.mouseX;
+					start_y = canvas.mouseY;
+				}
+			}
+
+			/**
+			 * 鼠标移动
+			 */
+			private function onStageMove(evt : MouseEvent) : void
+			{
+				if (isMoveUi && evt.buttonDown)
+				{
+					ui.x += canvas.mouseX - start_x;
+					ui.y += canvas.mouseY - start_y;
+					start_x = canvas.mouseX;
+					start_y = canvas.mouseY;
+					return;
+				}
+				if (isDraw)
+				{
+					drag_canvas.graphics.clear();
+					drag_canvas.graphics.beginFill(0x000000, 0.3);
+					drag_canvas.graphics.moveTo(start_x, start_y);
+					drag_canvas.graphics.lineTo(canvas.mouseX, start_y);
+					drag_canvas.graphics.lineTo(canvas.mouseX, canvas.mouseY);
+					drag_canvas.graphics.lineTo(start_x, canvas.mouseY);
+					drag_canvas.graphics.endFill();
+				}
+			}
+
+			/**
+			 * 鼠标弹起
+			 * 框选组件
+			 */
+			private function onStageUp(evt : MouseEvent) : void
+			{
+				if (!isDraw)
+					return;
+
+				var hit_list : Array = layer.getComList();
+				var len : int = hit_list.length;
+				var child : CSprite;
+				for (var i : int = 0; i < len; i++)
+				{
+					child = hit_list[i];
+					if (drag_canvas.hitTestObject(child))
+					{
+						child.target = true;
+						selectData.push(child);
+					}
+				}
+				drag_canvas.graphics.clear();
+				isDraw = false;
+			}
+
+			/**
+			 * 更新右边的属性面板
+			 */
+			private function updateRightField() : void
+			{
+				if (selectData.isChange)
+				{
+					selectData.isChange = false;
+					selectData.selectedTarget(true);
+					EventManager.dispatch(EventManager.UPDATE_FIELD, selectData.list)
+				}
+			}
+
+			protected function button1_clickHandler(event : MouseEvent) : void
+			{
+				img_source.visible = check_showBg.selected;
+			}
+
+			protected function button2_clickHandler(event : MouseEvent) : void
+			{
+				var btn : Button = event.currentTarget as Button;
+				switch (btn.label)
+				{
+					case "上":
+						selectData.sortOn(ComponentManager.UP);
+						break;
+					case "下":
+						selectData.sortOn(ComponentManager.DOWN);
+						break;
+					case "左":
+						selectData.sortOn(ComponentManager.LEFT);
+						break;
+					case "右":
+						selectData.sortOn(ComponentManager.RIGHT);
+						break;
+				}
+			}
+
+			protected function textinput1_changeHandler(event : Event) : void
+			{
+				switch (event.target)
+				{
+					case vgap:
+						selectData.componentGap("y", int(vgap.value));
+						break;
+					case hgap:
+						selectData.componentGap("x", int(hgap.value));
+						break;
+				}
+			}
+
+			private function updateStatus() : void
+			{
+				var display : CSprite;
+				var len : int = selectData.length;
+				var minx : int = int.MAX_VALUE, miny : int = int.MAX_VALUE;
+				var max_width : int = int.MIN_VALUE, max_height : int = int.MIN_VALUE;
+				for (var i : int = 0; i < len; i++)
+				{
+					display = selectData.getIndex(i);
+					if (display.x < minx)
+						minx = display.x;
+					minx = Math.min(display.x, minx);
+					miny = Math.min(display.y, miny);
+					max_width = Math.max(display.x + display.width, max_width);
+					max_height = Math.max(display.y + display.height, max_height);
+				}
+				txt_status.text = len == 0 ? "" : "x : " + minx + " y : " + miny + " width : " + (max_width - minx) + " height : " + (max_height - miny);
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+
+	<mx:Canvas width="100%"
+			   height="100%"
+			   y="{tabBar.height}"
+			   id="canvas"
+			   dragDrop="dragDropHandler(event)"
+			   dragEnter="enterHandler(event)">
+	</mx:Canvas>
+	<s:Label width="350"
+			 color="0xffffff"
+			 fontSize="18"
+			 paddingTop="6"
+			 id="txt_status"/>
+	<s:ComboBox id="combox"
+				width="80"
+				change="combox_changeHandler(event)"/>
+	<mx:TabBar id="tabBar"
+			   tabWidth="80"
+			   itemClick="tabBar_itemClickHandler(event)">
+		<mx:dataProvider>{STATE_ARRAY}</mx:dataProvider>
+	</mx:TabBar>
+
+	<s:TextArea width="100%"
+				height="100%"
+				fontSize="16"
+				color="0x999999"
+				y="{tabBar.height}"
+				id="txt_code"
+				editable="false"
+				contentBackgroundColor="0x222222"/>
+
+	<s:HGroup id="m_group"
+			  width="100%"
+			  height="100%">
+		<s:CheckBox label="显示背景"
+					selected="true"
+					id="check_showBg"
+					click="button1_clickHandler(event)"/>
+		<s:Label text="排序 : "
+				 paddingTop="4"
+				 paddingLeft="4"/>
+		<s:Button label="上"
+				  width="35"
+				  click="button2_clickHandler(event)"/>
+		<s:Button label="下"
+				  width="35"
+				  click="button2_clickHandler(event)"/>
+		<s:Button label="左"
+				  width="35"
+				  click="button2_clickHandler(event)"/>
+		<s:Button label="右"
+				  width="35"
+				  click="button2_clickHandler(event)"/>
+		<s:Label paddingLeft="4"
+				 paddingTop="4"
+				 text="vgap"/>
+		<s:NumericStepper width="60"
+						  id="vgap"
+						  maximum="9999"
+						  change="textinput1_changeHandler(event)"/>
+		<s:Label paddingLeft="4"
+				 paddingTop="4"
+				 text="hgap"/>
+		<s:NumericStepper width="60"
+						  id="hgap"
+						  maximum="9999"
+						  change="textinput1_changeHandler(event)"/>
+	</s:HGroup>
+</s:Panel>

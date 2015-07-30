@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Panel xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 title="属性"
+		 xmlns:view="view.*"
+		 creationComplete="init(event)">
+	<fx:Script>
+		<![CDATA[
+			import view.component.CSprite;
+			import flash.utils.setTimeout;
+
+			import mx.collections.ArrayCollection;
+			import mx.core.UIComponent;
+			import mx.events.FlexEvent;
+			import mx.events.IndexChangedEvent;
+			import mx.events.ItemClickEvent;
+
+			import spark.components.ComboBox;
+			import spark.components.HGroup;
+			import spark.components.Label;
+			import spark.components.NumericStepper;
+			import spark.components.TextInput;
+			import spark.components.VGroup;
+
+			import core.Config;
+			import manager.EventManager;
+			import core.ExEvent;
+			import manager.HistoryManager;
+
+
+
+
+
+
+			[Bindable]
+			public var STATE_ARRAY : Array = ["属性", "历史记录"];
+			private var display : CSprite;
+			private var dic : Dictionary = new Dictionary();
+			private var list_histroy : Array;
+			private var select_list : Vector.<CSprite>;
+			private var min_x : int = int.MAX_VALUE;
+			private var min_y : int = int.MAX_VALUE;
+
+			protected function init(event : FlexEvent) : void
+			{
+				EventManager.addListener(EventManager.UPDATE_FIELD, onUpdateView);
+				EventManager.addListener(EventManager.UPDATE_HISTORY, onUpdateHistroy);
+				tabBar_itemClickHandler();
+			}
+
+			private function onUpdateHistroy(evt : ExEvent) : void
+			{
+				if (box_history)
+					box_history.dataProvider = new ArrayCollection(HistoryManager.Ins().history_list);
+			}
+
+			private function onUpdateView(evt : ExEvent) : void
+			{
+				while (box.numChildren > 0)
+					box.removeChildAt(0);
+				box.label = "常用属性";
+
+				select_list = evt.data as Vector.<CSprite>;
+
+				if (!select_list || select_list.length == 0)
+					return;
+				display = select_list[0];
+				//框选组件
+				if (select_list.length == 1)
+					select_list = null;
+
+				var data : Object = display.data.data;
+				var vgroup : VGroup = new VGroup();
+				vgroup.paddingTop = vgroup.paddingLeft = 6;
+				box.addElement(vgroup);
+				if (select_list)
+				{
+					var len : int = select_list.length;
+					min_x = min_y = int.MAX_VALUE;
+					for (var i : int = 0; i < len; i++)
+					{
+						display = select_list[i];
+						if (display.x < min_x)
+							min_x = display.x;
+						if (display.y < min_y)
+							min_y = display.y;
+					}
+					data = {x: min_x, y: min_y};
+					xmlList = Config.getXmlByType("selectAll").field;
+					for each (tmp in xmlList)
+					{
+						parseXml(tmp);
+					}
+					return;
+				}
+				//丢失资源特殊处理
+				if (display.isLostRes)
+				{
+					parseXml(Config.getXmlByType("miss")[0].field[0]);
+					return;
+				}
+				var hgroup : HGroup;
+				var txt_label : Label;
+				var txt_input : TextInput;
+				var txt_num : NumericStepper;
+				var combox : ComboBox;
+				var child : UIComponent;
+				var xmlList : XMLList;
+				var type : String;
+				var name : String;
+				var value : String;
+				var tmp : XML;
+
+				box.label = "常用属性       type : " + data.res;
+				xmlList = Config.getXmlByType("component").field;
+
+				for each (tmp in xmlList)
+				{
+					parseXml(tmp);
+				}
+				xmlList = Config.getOtrXmlByType(data.type)[0].field;
+				for each (tmp in xmlList)
+				{
+					parseXml(tmp);
+				}
+
+				function parseXml(tmp : XML) : void
+				{
+					hgroup = new HGroup();
+					type = tmp.@type;
+					value = tmp.@value;
+					name = tmp.@name;
+					txt_label = new Label();
+					txt_label.setStyle("color", 0xffffff);
+					txt_label.setStyle("paddingTop", 6);
+					txt_label.setStyle("paddingLeft", 6);
+					txt_label.text = name;
+					txt_label.width = 80;
+					hgroup.addElement(txt_label);
+					switch (type)
+					{
+						case "int":
+						case "string":
+							txt_input = new TextInput();
+							txt_input.text = data[name] == null ? "" : data[name];
+							dic[name] = "text";
+							txt_input.addEventListener(FlexEvent.ENTER, onChildChange, false, 0, true);
+							txt_input.addEventListener(FocusEvent.FOCUS_IN, onFouseIn, false, 0, true);
+							child = txt_input;
+							break;
+						case "bool":
+							combox = new ComboBox();
+							child = combox;
+							combox.dataProvider = new ArrayCollection(["true", "false"]);
+							combox.selectedItem = data[name];
+							dic[name] = "selectedItem";
+							combox.addEventListener(Event.CHANGE, onChildChange, false, 0, true);
+							break;
+						case "comboBox":
+							combox = new ComboBox();
+							child = combox;
+							var groups : String = tmp.@groups;
+							if (!groups)
+							{
+								try
+								{
+									var file : File = new File(Config.url_project + "\\" + tmp.@typeValue);
+									var list : Array = file.getDirectoryListing();
+									var tmp_list : Array = [];
+									for (var i : int = 0; i < list.length; i++)
+									{
+										tmp_list.push(File(list[i]).name);
+									}
+									combox.dataProvider = new ArrayCollection(tmp_list);
+								}
+								catch (e : Error)
+								{
+									combox.dataProvider = new ArrayCollection([]);
+								}
+							}
+							else
+							{
+								combox.dataProvider = new ArrayCollection(groups.split(","));
+							}
+							combox.selectedItem = data[name];
+							combox.addEventListener(Event.CHANGE, onChildChange, false, 0, true);
+							dic[name] = "selectedItem";
+							break;
+					}
+					child.name = name;
+					child.width = 110;
+					child.setStyle("color", 0xffffff);
+					child.setStyle("borderColor", 0);
+					hgroup.addElement(child);
+					vgroup.addElement(hgroup);
+				}
+
+				function onFouseIn(evt : Event) : void
+				{
+					evt.currentTarget.addEventListener(FocusEvent.FOCUS_OUT, onChildChange, false, 0, true);
+				}
+			}
+
+			/**
+			 * 更新原件数据
+			 */
+			private function onChildChange(evt : Event) : void
+			{
+				evt.currentTarget.removeEventListener(FocusEvent.FOCUS_OUT, onChildChange);
+				if (display == null || display.data == null)
+					return;
+				var child : UIComponent = evt.currentTarget as UIComponent;
+				//属性
+				var field : String = child.name;
+				//type
+				var type : String = dic[field];
+				var value : String = child[type];
+				if (select_list && select_list.length > 0)
+				{
+					var move : int = int(value) - (field == "x" ? min_x : min_y);
+					updateAllComponent(field, move);
+					if (field == "x")
+						min_x = int(value);
+					if (field == "y")
+						min_y = int(value);
+					//记录历史记录
+					move > 0 && HistoryManager.Ins().addHistoryByList(select_list, HistoryManager.CHANGE);
+					return;
+				}
+				if (field == "替换资源")
+				{
+					display.data.res = value;
+					//有这个资源才转换
+					if (!Config.createComponetByName(display.data.res).isLostRes)
+						EventManager.dispatch(EventManager.CHANGE_COMPONENT, display.data);
+					return;
+				}
+
+				if (display.data[field] != value)
+				{
+					//记录历史记录
+					HistoryManager.Ins().addHistoryByList(Vector.<CSprite>([display]), HistoryManager.CHANGE);
+					if (display.data[field] is Array)
+						display.data[field] = value.split(",");
+					else if (display.data[field] is Boolean)
+						display.data[field] = value == "true";
+					else
+						display.data[field] = value;
+					display.data.updateView();
+					//重回
+					display.transformTool && setTimeout(display.transformTool.draw, 0);
+				}
+			}
+
+			protected function accordion_changeHandler(event : IndexChangedEvent) : void
+			{
+				if (box_history == null)
+					return;
+				if (list_histroy && accordion.selectedIndex == 1)
+					box_history.dataProvider = new ArrayCollection(list_histroy);
+				else
+					box_history.dataProvider = null;
+			}
+
+			protected function tabBar_itemClickHandler(event : ItemClickEvent = null) : void
+			{
+				box_history.visible = tabBar.selectedIndex == 1;
+				accordion.visible = tabBar.selectedIndex == 0;
+			}
+
+			private function updateAllComponent(field : String, value : int) : void
+			{
+				var len : int, i : int;
+				len = select_list.length;
+				for (i = 0; i < len; i++)
+				{
+					select_list[i][field] += value;
+					select_list[i].data.updateData();
+				}
+			}
+
+			protected function box_history_clickHandler(event : MouseEvent) : void
+			{
+				trace(box_history.selectedItem)
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+
+	<mx:TabBar id="tabBar"
+			   tabWidth="80"
+			   itemClick="tabBar_itemClickHandler(event)">
+		<mx:dataProvider>{STATE_ARRAY}</mx:dataProvider>
+	</mx:TabBar>
+
+	<s:List y="{tabBar.height}"
+			color="0xffffff"
+			width="100%"
+			height="100%"
+			id="box_history"
+			itemRenderer="view.HistoryRender"
+			click="box_history_clickHandler(event)"/>
+	<mx:Accordion y="{tabBar.height}"
+				  id="accordion"
+				  color="0xffffff"
+				  width="100%"
+				  height="75%"
+				  change="accordion_changeHandler(event)">
+		<!-- Define each panel using a VBox container. -->
+		<mx:VBox id="box"
+				 label="常用属性">
+		</mx:VBox>
+	</mx:Accordion>
+
+	<view:LayerPanel id="layer"
+					 width="100%"
+					 height="25%"
+					 y="{accordion.height}"/>
+</s:Panel>
