@@ -5,8 +5,8 @@ package view.component
 	import flash.utils.ByteArray;
 
 	import core.Config;
-	import core.data.ViewConfig;
-	import core.data.ViewData;
+	import core.data.SUiObject;
+	import core.data.SViewData;
 
 	import utils.CLoader;
 	import utils.FilesUtil;
@@ -33,20 +33,20 @@ package view.component
 		{
 			if (data == null)
 				return;
-			var viewData : ViewData = ViewData(data);
+			var viewData : SViewData = SViewData(data);
 			var dataXml : XML = viewData.dataXml;
-			var nativePath : String = Config.url_project + "\\" + dataXml.field.(@name == "view")[0].@typeValue + "\\" + viewData.view;
+			var nativePath : String = Config.projectUrl + "\\" + dataXml.field.(@name == "view")[0].@typeValue + "\\" + viewData.view;
 			var file : File = new File(nativePath);
 			var loadIndex : int = 0;
 
 			if (file.exists && viewData.view != "")
 			{
-				var viewConfig : ViewConfig = ViewConfig.parse(FilesUtil.getBytesFromeFile(nativePath, true));
-				var loadCount : int = viewConfig.res_list.length;
+				var viewConfig : SUiObject = SUiObject.parseByteArray(FilesUtil.getBytesFromeFile(nativePath, true));
+				var loadCount : int = viewConfig.resourceList.length;
 
 				for (var i : int = 0; i < loadCount; i++)
 				{
-					new CLoader(Config.res_url + viewConfig.res_list[i], complement, viewConfig);
+					new CLoader(Config.projectResourceUrl + viewConfig.resourceList[i], complement, viewConfig);
 				}
 			}
 			else
@@ -54,7 +54,7 @@ package view.component
 				container.addChild(text);
 			}
 
-			function complement(bytes : ByteArray, viewConfig : ViewConfig) : void
+			function complement(bytes : ByteArray, viewConfig : SUiObject) : void
 			{
 				if (++loadIndex < loadCount)
 					return;

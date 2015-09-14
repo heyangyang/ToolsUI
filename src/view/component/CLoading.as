@@ -18,20 +18,23 @@ package view.component
 				instance = new CLoading();
 			return instance;
 		}
+		private const COUNT : int = 3;
+		private const CLOSE_TIME : int = 600;
 		private var text : CTextDisplay;
 		private var runTime : int;
 		private var delayTime : int;
 		private var index : int = 0;
+		private var mTxtArray : Array = [];
 
 		public function CLoading()
 		{
 			super();
-			this.addEventListener(Event.ADDED_TO_STAGE, onAddToStage);
+			addEventListener(Event.ADDED_TO_STAGE, onAddToStage);
 		}
 
 		private function onAddToStage(evt : Event) : void
 		{
-			this.removeEventListener(Event.ADDED_TO_STAGE, onAddToStage);
+			removeEventListener(Event.ADDED_TO_STAGE, onAddToStage);
 			var shape : Shape = new Shape();
 			shape.graphics.beginFill(0x00000, 0.5);
 			shape.graphics.drawRect(0, 0, stage.fullScreenWidth, stage.fullScreenHeight);
@@ -44,14 +47,28 @@ package view.component
 			text.x = (stage.fullScreenWidth - 150) * .5;
 			text.y = stage.fullScreenHeight * .5;
 			addChild(text);
+
+			var tText : String;
+			for (var i : int = 0; i < COUNT; i++)
+			{
+				tText = "";
+				while (tText.length <= i)
+					tText += ".";
+				tText = "正在加载中" + tText;
+				mTxtArray.push(tText);
+			}
 		}
 
 		public function show() : void
 		{
+			if (parent)
+				return;
 			index = 0;
+			if (mTxtArray.length > 0)
+				text.text = mTxtArray[index];
 			delayTime = runTime = getTimer();
 			Config.stage.addChild(this);
-			this.addEventListener(Event.ENTER_FRAME, onUpdate);
+			addEventListener(Event.ENTER_FRAME, onUpdate);
 		}
 
 		private function onUpdate(evt : Event) : void
@@ -59,23 +76,20 @@ package view.component
 			if (getTimer() - delayTime < 200)
 				return;
 			delayTime = getTimer();
-			text.text = "正在加载中";
-			for (var i : int = 0; i < index; i++)
-				text.text += ".";
-			index++;
-			if (index > 3)
+			text.text = mTxtArray[index];
+			if (++index > 3)
 				index = 0;
 		}
 
 		public function hide(fun : Function = null) : void
 		{
-			if (getTimer() - runTime < 600)
+			if (getTimer() - runTime < CLOSE_TIME)
 			{
-				setTimeout(hide, 600 - (getTimer() - runTime), fun);
+				setTimeout(hide, CLOSE_TIME - (getTimer() - runTime), fun);
 				return;
 			}
 			fun != null && fun.apply(this);
-			this.removeEventListener(Event.ENTER_FRAME, onUpdate);
+			removeEventListener(Event.ENTER_FRAME, onUpdate);
 			parent && parent.removeChild(this);
 		}
 	}

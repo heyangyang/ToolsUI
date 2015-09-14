@@ -1,12 +1,12 @@
 package core.data
 {
 	import flash.display.Sprite;
-
+	
 	import core.Config;
-
+	
 	import view.component.CSprite;
 
-	public class LayerData
+	public class SLayerData
 	{
 		private var _index : int;
 		private var _visible : Boolean;
@@ -76,7 +76,7 @@ package core.data
 		{
 			for (var i : int = 0; i < layer.numChildren; i++)
 			{
-				Config.view.deleteTarget(layer.getChildAt(i) as CSprite);
+				Config.current.deleteTarget(layer.getChildAt(i) as CSprite);
 			}
 			layer && layer.parent && layer.parent.removeChild(layer);
 		}

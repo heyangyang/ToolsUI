@@ -4,7 +4,7 @@ package core.data
 	
 	import view.component.CTabBar;
 
-	public class TabBarData extends ViewBase
+	public class ComponnetTabBar extends SViewBase
 	{
 		public var normal_res : String;
 		public var select_res : String;
@@ -15,7 +15,7 @@ package core.data
 		public var fontSize : int;
 		public var bold : Boolean;
 		
-		public function TabBarData()
+		public function ComponnetTabBar()
 		{
 			super();
 		}

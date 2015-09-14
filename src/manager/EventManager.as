@@ -7,23 +7,23 @@ package manager
 	import flash.filesystem.File;
 	import flash.net.FileFilter;
 	import flash.utils.ByteArray;
-	
+
 	import mx.controls.Alert;
 	import mx.managers.PopUpManager;
-	
+
 	import core.CodeUtils;
 	import core.Config;
-	import core.ExEvent;
-	import core.data.ViewConfig;
-	
+	import core.SEvent;
+	import core.data.SUiObject;
+
 	import utils.CLoader;
 	import utils.FilesUtil;
 	import utils.GetSwfAllClass;
-	
-	import view.CreateProjectWindow;
-	import view.CreateViewWindow;
-	import view.SettingWindow;
+
 	import view.component.CLoading;
+	import view.window.SWindowCreateProject;
+	import view.window.SWindowCreateUi;
+	import view.window.SWindowSetting;
 
 	public class EventManager extends EventDispatcher
 	{
@@ -63,6 +63,7 @@ package manager
 		 * 批量生成所有代码
 		 */
 		public static const CREATE_ALL_CODE : String = "Create_ALL_CODE";
+		public static const CREATE_CODE : String = "Create_CODE";
 		/**
 		 * 显示某个组件
 		 */
@@ -84,6 +85,11 @@ package manager
 		 * 更新图层
 		 */
 		public static const UPDATE_LAYER : String = "update_layer";
+		/**
+		 * 退出程序
+		 */
+		public static const EXIT_WINODW : String = "exit_window";
+
 		private static var instance : EventManager;
 
 		public function EventManager(target : IEventDispatcher = null)
@@ -94,15 +100,15 @@ package manager
 		public static function getInstance() : EventManager
 		{
 			if (instance == null)
-			{
 				instance = new EventManager();
-				instance.init();
-			}
 			return instance;
 		}
 
-		private function init() : void
+		private var mCurrent : SUiObject;
+
+		public function init() : void
 		{
+			mCurrent = Config.current;
 			addListener(CREATE_PROJECT, onCreateProtect);
 			addListener(IMPORT_PROJECT, onImportProtect);
 			addListener(CREATE_VIEW, onCreateView);
@@ -119,30 +125,30 @@ package manager
 		 * @param evt
 		 *
 		 */
-		private function onCreateViewCodeHanlder(evt : ExEvent) : void
+		private function onCreateViewCodeHanlder(evt : SEvent) : void
 		{
 			CLoading.getInstance().show();
 			var isBath : Boolean = Boolean(evt.data);
 			var saveFile : File = new File();
 			if (isBath)
 			{
-				if (Config.url_project == null || Config.url_project == "")
+				if (Config.projectUrl == null || Config.projectUrl == "")
 				{
-					Alert.show("请先创建项目!", "提示");
+					Config.alert("请先创建项目!");
 					return;
 				}
 			}
 			else
 			{
-				if (!Config.view.class_name)
+				if (!mCurrent.className)
 				{
-					Alert.show("请先创建UI!", "提示");
+					Config.alert("请先创建UI!");
 					return;
 				}
 			}
 
-			if (LocalShareManager.getInstance().get("save_code"))
-				saveFile.nativePath = LocalShareManager.getInstance().get("save_code");
+			if (LocalShareManager.get("save_code"))
+				saveFile.nativePath = LocalShareManager.get("save_code");
 			saveFile.addEventListener(Event.SELECT, onSelect);
 			saveFile.addEventListener(Event.CANCEL, onExit);
 			saveFile.browseForDirectory("生成");
@@ -151,27 +157,27 @@ package manager
 			{
 				var code : String;
 				if (isBath)
-					seachDirectoryList(Config.url_project);
+					seachDirectoryList(Config.projectUrl);
 				else
-					saveCode(Config.view);
+					saveCode(mCurrent);
 				saveFile.openWithDefaultApplication();
 				CLoading.getInstance().hide();
-				LocalShareManager.getInstance().save("save_code", saveFile.nativePath);
-				dispatch(SAVE_VIEW);
+				LocalShareManager.save("save_code", saveFile.nativePath);
+				//dispatch(SAVE_VIEW);
 			}
 
 			function onExit(evt : Event) : void
 			{
 				CLoading.getInstance().hide();
 			}
-			
-			function saveCode(data : ViewConfig) : void
+
+			function saveCode(data : SUiObject) : void
 			{
 				var code : String = CodeUtils.getAsCode(data);
-				var saveDirectory : String = saveFile.nativePath + "\\" + String(data.extends_name.split(".").pop()).toLocaleLowerCase();
+				var saveDirectory : String = saveFile.nativePath + "\\" + String(data.extendsName.split(".").pop()).toLocaleLowerCase();
 				var file : File = new File(saveDirectory);
 				!file.exists && file.createDirectory();
-				FilesUtil.saveUTFBytesToFile(saveDirectory + "\\" + data.class_name + ".as", code);
+				FilesUtil.saveUTFBytesToFile(saveDirectory + "\\" + data.className + ".as", code);
 			}
 
 			function seachDirectoryList(url : String) : void
@@ -181,7 +187,7 @@ package manager
 				var len : int = file_list.length;
 				var tmp_file : File;
 				var bytes : ByteArray;
-				var viewData : ViewConfig;
+				var viewData : SUiObject;
 				for (var i : int = 0; i < len; i++)
 				{
 					tmp_file = file_list[i];
@@ -193,7 +199,7 @@ package manager
 					if (tmp_file.name.indexOf(".ui") == -1 || tmp_file.name.indexOf(".uip") >= 0)
 						continue;
 					bytes = FilesUtil.getBytesFromeFile(tmp_file.nativePath, true);
-					viewData = ViewConfig.parse(bytes, true);
+//					viewData = SUiObject.parseByteArray(bytes, true);
 					saveCode(viewData);
 				}
 			}
@@ -206,7 +212,7 @@ package manager
 		 */
 		private function onCreateProtect(evt : Event) : void
 		{
-			PopUpManager.createPopUp(Config.layer, CreateProjectWindow, true);
+			PopUpManager.createPopUp(Config.layer, SWindowCreateProject, true);
 		}
 
 		/**
@@ -222,7 +228,7 @@ package manager
 
 			function fileSelectedHandler(evt : Event) : void
 			{
-				Config.url_project = file.nativePath;
+				Config.updateProject(file.nativePath);
 			}
 		}
 
@@ -233,12 +239,12 @@ package manager
 		 */
 		private function onCreateView(evt : Event) : void
 		{
-			if (Config.url_project == null || Config.url_project == "")
+			if (Config.projectUrl == null || Config.projectUrl == "")
 			{
-				Alert.show("请先创建项目!", "提示");
+				Config.alert("请先创建项目!");
 				return;
 			}
-			PopUpManager.createPopUp(Config.layer, CreateViewWindow, true);
+			PopUpManager.createPopUp(Config.layer, SWindowCreateUi, true);
 		}
 
 		private var loadIndex : int;
@@ -253,17 +259,17 @@ package manager
 		 */
 		private function onImprotRes(evt : Event) : void
 		{
-			if (!Config.view.class_name)
+			if (!mCurrent.className)
 			{
-				Alert.show("请先创建UI!", "提示");
+				Config.alert("请先创建UI!");
 				return;
 			}
 			//清除资源列表
-			Config.view.res_list.length = 0;
+			mCurrent.resourceList.length = 0;
 			var swfFile : File = new File();
 			var txtFilter : FileFilter = new FileFilter("swf文件(.swf)", "*.swf");
-			if (LocalShareManager.getInstance().get("swf"))
-				swfFile.nativePath = LocalShareManager.getInstance().get("swf");
+			if (LocalShareManager.get("swf"))
+				swfFile.nativePath = LocalShareManager.get("swf");
 
 			swfFile.browseForOpenMultiple("选择要导入的文件", [txtFilter]);
 			swfFile.addEventListener(FileListEvent.SELECT_MULTIPLE, swfFileSelectedHandler);
@@ -271,7 +277,7 @@ package manager
 			function swfFileSelectedHandler(evt : FileListEvent) : void
 			{
 				for each (var tmp_swfFile : File in evt.files)
-					Config.view.res_list.push(tmp_swfFile.name);
+					mCurrent.resourceList.push(tmp_swfFile.name);
 				onStartLoaderResSwf();
 			}
 		}
@@ -282,7 +288,7 @@ package manager
 			var bytes : ByteArray;
 			var nativePath : String, name : String;
 			loadIndex = 0;
-			loadCount = Config.view.res_list.length;
+			loadCount = mCurrent.resourceList.length;
 			//分类
 			fileXml = <root label="root"/>;
 			//整合
@@ -296,11 +302,11 @@ package manager
 
 			for (var i : int = 0; i < loadCount; i++)
 			{
-				name = Config.view.res_list[i].split(".").shift();
-				nativePath = Config.res_url + Config.view.res_list[i];
+				name = mCurrent.resourceList[i].split(".").shift();
+				nativePath = Config.projectResourceUrl + mCurrent.resourceList[i];
 				xml = <swf label={name}/>;
 				fileXml.appendChild(xml);
-				LocalShareManager.getInstance().save("swf", nativePath);
+				LocalShareManager.save("swf", nativePath);
 				new CLoader(nativePath, onResComplete, name, xml);
 			}
 		}
@@ -364,21 +370,24 @@ package manager
 		}
 
 		/**
-		 * 保存资源
+		 * 保存ui数据
 		 * @param evt
 		 *
 		 */
-		private function onSaveView(evt : Event) : void
+		private function onSaveView(evt : SEvent) : void
 		{
-			if (!Config.view.class_name)
+			var data : SUiObject = evt.data as SUiObject;
+			if (!data || !data.className)
 			{
-				Alert.show("请先创建UI!", "提示");
+				Config.alert("请先创建UI!");
 				return;
 			}
-			var extends_name : String = Config.view.extends_name.split(".").pop();
-			extends_name = extends_name.toLocaleLowerCase();
-			FilesUtil.saveToFile(Config.view.url, ViewConfig.save(Config.view), true, true);
-			Alert.show("保存成功!", "提示");
+			var file : File = new File(data.nativeUrl);
+			if (file.exists)
+				Config.alert("保存成功!");
+			else
+				Config.alert("创建成功!");
+			FilesUtil.saveToFile(data.nativeUrl, SUiObject.toByteArray(data), true, true);
 		}
 
 		/**
@@ -388,22 +397,22 @@ package manager
 		 */
 		private function onSettingView(evt : Event) : void
 		{
-			if (!Config.view.class_name)
+			if (!mCurrent.className)
 			{
-				Alert.show("请先创建UI!", "提示");
+				Config.alert("请先创建UI!");
 				return;
 			}
-			PopUpManager.createPopUp(Config.layer, SettingWindow, true);
+			PopUpManager.createPopUp(Config.layer, SWindowSetting, true);
 		}
 
 		private function onSecurityError(evt : Event) : void
 		{
-			Alert.show("加载swf出错!");
+			Config.alert("加载swf出错!");
 		}
 
 		public function dispatch(evt : String, data : Object = null) : void
 		{
-			this.dispatchEvent(new ExEvent(evt, data));
+			this.dispatchEvent(new SEvent(evt, data));
 		}
 
 		public static function dispatch(evt : String, data : Object = null) : void

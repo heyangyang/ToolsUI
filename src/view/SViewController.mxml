@@ -2,6 +2,7 @@
 		 xmlns:s="library://ns.adobe.com/flex/spark"
 		 xmlns:mx="library://ns.adobe.com/flex/mx"
 		 addedToStage="init(event)"
+		 fontFamily="SimSun"
 		 title="操作">
 	<fx:Script>
 		<![CDATA[
@@ -18,30 +19,24 @@
 
 			import core.CodeUtils;
 			import core.Config;
-			import core.ExEvent;
-			import core.data.LayerData;
-			import core.data.ViewBase;
+			import core.SEvent;
+			import core.data.SLayerData;
+			import core.data.SUiObject;
+			import core.data.SViewBase;
 
 			import manager.ComponentManager;
 			import manager.EventManager;
 			import manager.HistoryManager;
 
-			import view.component.CLayerView;
+			import view.component.SLayerView;
 			import view.component.CSprite;
-
-
-
-
-
-
-
 
 
 			[Bindable]
 			public var STATE_ARRAY : Array = ["视图", "代码"];
 			[Bindable]
 			public var SACLE_ARRAY : Array = ["25%", "50%", "100%", "200%", "400%", "800%"];
-			private var layer : CLayerView;
+			private var layer : SLayerView;
 			private var img_bg : Bitmap = new Bitmap();
 			private var img_source : Bitmap = new Bitmap();
 			private var isDraw : Boolean = false;
@@ -54,9 +49,11 @@
 			private var start_y : int;
 			private var shiftKey : Boolean;
 			private var selectData : ComponentManager;
+			private var mCurrent : SUiObject;
 
 			protected function init(event : Event) : void
 			{
+				mCurrent = Config.current;
 				var group : VGroup = new VGroup();
 				group.addElement(m_group);
 				controlBarContent = [group];
@@ -65,7 +62,8 @@
 				selectData = ComponentManager.Ins();
 				txt_code.visible = false;
 				combox.dataProvider = new ArrayCollection(SACLE_ARRAY);
-				layer = CLayerView.getInstance();
+				combox.visible = false;
+				layer = SLayerView.getInstance();
 				ui = new UIComponent();
 				ui.addChild(drag_canvas);
 				canvas.addChildAt(ui, 0);
@@ -147,17 +145,17 @@
 			/**
 			 * 转换组件
 			 */
-			private function onChangeComponent(evt : ExEvent) : void
+			private function onChangeComponent(evt : SEvent) : void
 			{
 				clearSelected();
-				var oldData : ViewBase = evt.data as ViewBase;
+				var oldData : SViewBase = evt.data as SViewBase;
 				var display : CSprite = createComponent(oldData.res)
-				var newData : ViewBase = Config.view.create(oldData.res, display, oldData.swf, oldData.type, oldData.x, oldData.y, oldData.width, oldData.height);
+				var newData : SViewBase = mCurrent.create(oldData.res, display, oldData.swf, oldData.type, oldData.x, oldData.y, oldData.width, oldData.height);
 				newData.name = oldData.name;
 				newData.updateView();
 				layer.addComponent(display, oldData.layer_index);
 				selectData.push(display);
-				Config.view.deleteData(oldData);
+				mCurrent.deleteData(oldData);
 			}
 
 			/**
@@ -167,16 +165,16 @@
 			private function initView(evt : Event) : void
 			{
 				layer.selectIndex = 0;
-				parseView(Config.view.comList)
+				parseView(mCurrent.viewList)
 			}
 
 			/**
 			 * 根据数据创建界面
 			 */
-			private function parseView(comLis : Vector.<ViewBase>) : void
+			private function parseView(comLis : Vector.<SViewBase>) : void
 			{
 				var len : int = comLis.length;
-				var data : ViewBase;
+				var data : SViewBase;
 				var child : CSprite;
 				for (var i : int = 0; i < len; i++)
 				{
@@ -198,7 +196,7 @@
 			 */
 			protected function onShowViewHandler(evt : Event) : void
 			{
-				if (Config.view == null || !Config.view.class_name)
+				if (mCurrent == null || !mCurrent.className)
 				{
 					Config.alert("没有找到ui路径");
 					return;
@@ -207,12 +205,13 @@
 				//清理历史记录
 				HistoryManager.Ins().removeHistory(null);
 				img_bg.bitmapData && img_bg.bitmapData.dispose();
-				img_bg.bitmapData = new BitmapData(Config.view.width, Config.view.height, false, 0x333333);
+				img_bg.bitmapData = new BitmapData(mCurrent.width, mCurrent.height, false, 0x333333);
 				scaleCanvas(1);
 				combox.x = canvas.width - combox.width - 10;
 				txt_status.x = combox.x - txt_status.width - 20;
 				combox.selectedIndex = 0;
 				combox.selectedIndex = 2;
+				combox.visible = true;
 				tabBar_itemClickHandler();
 				tabBar.visible = true;
 			}
@@ -227,10 +226,10 @@
 				clearSelected();
 				HistoryManager.Ins().rollBackHistory(excute);
 
-				function excute(viewData : ViewBase, dis_index : int) : void
+				function excute(viewData : SViewBase, dis_index : int) : void
 				{
 					if (viewData.display.parent == null)
-						Config.view.comList.push(viewData);
+						mCurrent.viewList.push(viewData);
 					layer.addComponentAt(viewData.display, dis_index, viewData.layer_index);
 					selectData.push(viewData.display);
 				}
@@ -269,7 +268,7 @@
 			protected function onKeyDownHandler(evt : KeyboardEvent) : void
 			{
 				var len : int, i : int, index : int;
-				var display : CSprite, viewDate : ViewBase;
+				var display : CSprite, viewDate : SViewBase;
 
 				if (tabBar.selectedIndex == 1)
 					return;
@@ -360,13 +359,15 @@
 			{
 				clearSelected();
 				var xml : XML = evt.dragSource.dataForFormat("res") as XML;
+				if (xml == null)
+					return;
 				var res_name : String = xml.@label;
 				var swf_name : String = xml.@swf;
 				var type : String = xml.@type;
 				var child : CSprite = createComponent(res_name);
 				if (child)
 				{
-					Config.view.create(res_name, child, swf_name, type, layer.mouseX, layer.mouseY);
+					mCurrent.create(res_name, child, swf_name, type, layer.mouseX, layer.mouseY);
 					layer.addComponent(child);
 					selectData.push(child);
 					selectData.addHistory(HistoryManager.ADD);
@@ -399,7 +400,7 @@
 			private function onComponentClick(evt : MouseEvent) : void
 			{
 				var child : CSprite = evt.currentTarget as CSprite;
-				var layData : LayerData = layer.getLayerByIndex(child.data.layer_index);
+				var layData : SLayerData = layer.getLayerByIndex(child.data.layer_index);
 				if (layData.lock || !layData.visible)
 					return;
 				//选中当前元件所在的图层
@@ -470,7 +471,7 @@
 				txt_status.visible = combox.visible = canvas.visible = tabBar.selectedIndex == 0;
 				txt_code.visible = tabBar.selectedIndex == 1;
 				if (tabBar.selectedIndex == 1)
-					txt_code.text = CodeUtils.getAsCode(Config.view);
+					txt_code.text = CodeUtils.getAsCode(mCurrent);
 			}
 
 			protected function combox_changeHandler(event : IndexChangeEvent) : void

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<window:SWindowBase xmlns:fx="http://ns.adobe.com/mxml/2009"
+					xmlns:s="library://ns.adobe.com/flex/spark"
+					xmlns:mx="library://ns.adobe.com/flex/mx"
+					width="450"
+					height="135"
+					title="创建项目"
+					xmlns:window="view.window.*">
+	<fx:Script>
+		<![CDATA[
+			import mx.managers.PopUpManager;
+
+			import core.Config;
+
+			import manager.EventManager;
+			import manager.LocalShareManager;
+
+
+			protected override function init() : void
+			{
+				if (LocalShareManager.get(LocalShareManager.PROGRAM) == null)
+					txt_url.text = File.applicationDirectory.nativePath;
+				else
+					txt_url.text = LocalShareManager.get(LocalShareManager.PROGRAM);
+			}
+
+			protected function onProjectClickHandler(evt : Event) : void
+			{
+				var file : File = new File();
+				if (LocalShareManager.get(LocalShareManager.PROGRAM))
+					file.nativePath = LocalShareManager.get(LocalShareManager.PROGRAM);
+				file.browseForDirectory("选择");
+				file.addEventListener(Event.SELECT, onSelect);
+
+				function onSelect(evt : Event) : void
+				{
+					txt_url.text = file.nativePath;
+					LocalShareManager.save(LocalShareManager.PROGRAM, file.nativePath);
+				}
+			}
+
+			protected function onChangeProjectResourceUrl(evt : Event) : void
+			{
+				var file : File = new File();
+				if (LocalShareManager.get("project_res"))
+					file.nativePath = LocalShareManager.get("project_res");
+				file.browseForDirectory("选择");
+				file.addEventListener(Event.SELECT, onSelect);
+
+				function onSelect(evt : Event) : void
+				{
+					txt_resUrl.text = file.nativePath;
+					LocalShareManager.save("project_res", file.nativePath);
+				}
+			}
+
+			protected function onCreateProjectClick(evt : Event) : void
+			{
+				if (txt_name.text == "")
+				{
+					Config.alert("请输入项目名!");
+					return;
+				}
+				if (txt_resUrl.text == "")
+				{
+					Config.alert("请选择资源目录!");
+					return;
+				}
+				var file : File = new File(txt_url.text + File.separator + txt_name.text);
+				//目录不存在，则创建
+				!file.exists && file.createDirectory();
+				//保存项目数据
+				Config.saveProjectData(txt_name.text, file.nativePath, txt_resUrl.text);
+				//派发显示事件					
+				EventManager.dispatch(EventManager.SHOW_VIEW_TREE);
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<s:VGroup paddingTop="10"
+			  paddingLeft="10">
+		<s:HGroup>
+			<s:Label text="项目名称"/>
+			<s:TextInput width="300"
+						 id="txt_name"/>
+			<s:Button label="创建"
+					  color="0xffff00"
+					  click="onCreateProjectClick(event)"/>
+		</s:HGroup>
+		<s:HGroup>
+			<s:Label text="项目地址"/>
+			<s:TextInput editable="false"
+						 width="300"
+						 id="txt_url"/>
+			<s:Button label="浏览"
+					  click="onProjectClickHandler(event)"/>
+		</s:HGroup>
+		<s:HGroup>
+			<s:Label text="资源地址"/>
+			<s:TextInput editable="false"
+						 width="300"
+						 id="txt_resUrl"/>
+			<s:Button label="浏览"
+					  click="onChangeProjectResourceUrl(event)"/>
+		</s:HGroup>
+	</s:VGroup>
+</window:SWindowBase>

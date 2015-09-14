@@ -8,14 +8,14 @@ package view.component
 	import flash.display.Sprite;
 	
 	import manager.EventManager;
-	import core.data.ViewBase;
+	import core.data.SViewBase;
 
 	public class CSprite extends Sprite
 	{
 		public var isLostRes : Boolean = false;
 		public var display : DisplayObject;
 		public var transformTool : TransformTool;
-		public var data : ViewBase;
+		public var data : SViewBase;
 
 		public function CSprite(display : DisplayObject)
 		{
@@ -63,7 +63,7 @@ package view.component
 		
 		public function dispatch(evt : String, data : Object = null) : void
 		{
-			EventManager.getInstance().dispatch(evt, data);
+			EventManager.dispatch(evt, data);
 		}
 	}
 }

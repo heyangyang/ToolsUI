@@ -1,15 +1,18 @@
 package core
 {
 	import flash.display.Stage;
+	import flash.events.Event;
+	import flash.events.KeyboardEvent;
 	import flash.filesystem.File;
 	import flash.system.ApplicationDomain;
+	import flash.ui.Keyboard;
 	import flash.utils.ByteArray;
 
 	import mx.controls.Alert;
 
 	import spark.components.WindowedApplication;
 
-	import core.data.ViewConfig;
+	import core.data.SUiObject;
 
 	import manager.EventManager;
 	import manager.LocalShareManager;
@@ -25,77 +28,115 @@ package core
 
 	public class Config
 	{
-		public static var stage : Stage;
+		/**
+		 * 项目后缀
+		 */
+		public static const PROJECT_EXTENSION : String = ".uiproject";
+		/**
+		 * ui后缀
+		 */
+		public static const VIEW_EXTENSION : String = ".ui";
+		private static var sStage : Stage;
 		public static var layer : WindowedApplication;
 		public static var appDomain : ApplicationDomain;
-		public static var name : String;
-		public static var _url_project : String;
-		public static var res_url : String;
+		private static var sProjectName : String;
+		private static var sProjectUrl : String;
+		private static var sProjectResourceUrl : String;
 		/**
 		 * 当前界面数据
 		 */
-		public static var view : ViewConfig = new ViewConfig();
+		private static var sCurrent : SUiObject = new SUiObject();
 
-		private static var xml : XML;
+		public static function get current() : SUiObject
+		{
+			return sCurrent;
+		}
+
+		/**
+		 * 设置当前ui
+		 * @param data
+		 *
+		 */
+		public static function setCurrentUI(data : SUiObject) : void
+		{
+			sCurrent.clone(data);
+			EventManager.dispatch(EventManager.SHOW_VIEW_TREE);
+			EventManager.dispatch(EventManager.SHOW_VIEW);
+		}
+
+		private static var sRootXml : XML;
+		private static var sAlert : Alert;
+
+		/**
+		 * 初始化配置文件
+		 *
+		 */
+		public static function init(stage : Stage) : void
+		{
+			sStage = stage;
+			sStage.addEventListener(Event.RESIZE, onResizeHandler);
+			sStage.addEventListener(KeyboardEvent.KEY_UP, onKeyUpHandler);
+			var configFile : File = File.applicationDirectory.resolvePath("config.xml");
+			if (!configFile.exists)
+			{
+				alert("配置文件config.xml丢失!");
+				return;
+			}
+			sRootXml = new XML(FilesUtil.getBytesFromeFile(configFile.nativePath));
+			updateProject(LocalShareManager.get(LocalShareManager.PROJECT));
+		}
+
+		private static function onKeyUpHandler(evt : KeyboardEvent) : void
+		{
+			if (evt.keyCode == Keyboard.ESCAPE)
+				dispatch(EventManager.EXIT_WINODW);
+		}
+
+		private static function onResizeHandler(evt : Event) : void
+		{
+			dispatch(Event.RESIZE);
+		}
 
 		public static function getOtrXmlByType(type_ : String) : XML
 		{
-			return Config.xml.com.(@type == type_)[0];
+			return Config.sRootXml.com.(@type == type_)[0];
 		}
 
 		public static function getXmlByType(type : String) : XMLList
 		{
-			return Config.xml[type];
+			return Config.sRootXml[type];
 		}
 
-		/**
-		 * 项目目录地址
-		 */
-		public static function get url_project() : String
-		{
-			return _url_project;
-		}
 
-		/**
-		 * @private
-		 */
-		public static function set url_project(value : String) : void
+		public static function updateProject(value : String) : void
 		{
-			var file : File = new File(value);
-			if (!file.exists)
+			var rootFile : File = new File(value);
+			if (value == null || !rootFile.exists)
 			{
-				Alert.show("没有找到可用项目");
+				alert("没有找到可用项目");
 				return;
 			}
-			var list : Array = file.getDirectoryListing();
-			var len : int = list.length;
-			var tmp_file : File;
-			for (var i : int = 0; i < len; i++)
+			var list : Array = rootFile.getDirectoryListing();
+			var bytes : ByteArray;
+			for each (var tFile : File in list)
 			{
-				tmp_file = list[i];
-
-				if (tmp_file.name.indexOf(".uiproject") > 0)
-				{
-					var bytes : ByteArray = FilesUtil.getBytesFromeFile(tmp_file.nativePath, true);
-					name = bytes.readUTF();
-					bytes.readUTF();
-					res_url = bytes.readUTF() + "\\";
-					_url_project = value;
-					LocalShareManager.getInstance().save("project_url", value)
-					dispatch(EventManager.SHOW_VIEW_TREE);
-					return;
-				}
+				if (PROJECT_EXTENSION.substring(1) != tFile.extension)
+					continue;
+				//读取文件
+				bytes = FilesUtil.getBytesFromeFile(tFile.nativePath);
+				//获取名字
+				sProjectName = bytes.readUTF();
+				//获取项目地址
+				sProjectUrl = bytes.readUTF() + File.separator;
+				//获取资源路径
+				sProjectResourceUrl = bytes.readUTF() + File.separator;
+				//保存项目地址
+				LocalShareManager.save(LocalShareManager.PROJECT, sProjectUrl);
+				//派发显示事件					
+				dispatch(EventManager.SHOW_VIEW_TREE);
+				return;
 			}
-			Alert.show("没有找到可用项目");
-		}
-
-		public static function init() : void
-		{
-			xml = new XML(FilesUtil.getBytesFromeFile(File.applicationDirectory.resolvePath("config.xml").nativePath));
-			Config.url_project = LocalShareManager.getInstance().get("project_url");
-			stage.frameRate = 30;
-			EventManager.getInstance();
-			MenuController.getInstance();
+			alert("没有找到可用项目");
 		}
 
 		/**
@@ -131,7 +172,7 @@ package core
 			}
 			catch (e : Error)
 			{
-				Config.alert("丢失资源:" + res_name);
+				alert("丢失资源:" + res_name);
 				trace(e);
 				child = new CTextDisplay();
 				child.isLostRes = true;
@@ -139,25 +180,70 @@ package core
 			return child;
 		}
 
-		private static var _alert : Alert;
-
-		public static function alert(msg : String, isError : Boolean = false) : void
+		public static function alert(... args) : void
 		{
-			_alert = Alert.show(msg, isError ? "出错" : "提示");
+			sAlert = Alert.show(args.join(""), "提示");
+		}
+
+		public static function error(... args) : void
+		{
+			sAlert = Alert.show(args.join(""), "出错");
 		}
 
 		private static function dispatch(evt : String, obj : Object = null) : void
 		{
-			EventManager.getInstance().dispatch(evt, obj);
+			EventManager.dispatch(evt, obj);
 		}
 
-		public static function saveProject() : void
+		public static function saveProjectData(projectName : String, projectUrl : String, projectResourceUrl : String) : void
 		{
+			sProjectName = projectName + PROJECT_EXTENSION;
+			sProjectUrl = projectUrl + File.separator;
+			sProjectResourceUrl = projectResourceUrl + File.separator;
 			var byte : ByteArray = new ByteArray();
-			byte.writeUTF(name);
-			byte.writeUTF(_url_project);
-			byte.writeUTF(res_url);
-			FilesUtil.saveToFile(_url_project + "\\" + name + ".uiproject", byte, true, true);
+			byte.writeUTF(sProjectName);
+			byte.writeUTF(sProjectUrl);
+			byte.writeUTF(sProjectResourceUrl);
+			FilesUtil.saveToFile(sProjectUrl + sProjectName, byte, true, false);
+			LocalShareManager.save(LocalShareManager.PROJECT, sProjectUrl);
+		}
+
+		/**
+		 * 舞台
+		 * @return
+		 *
+		 */
+		public static function get stage() : Stage
+		{
+			return sStage;
+		}
+
+		/**
+		 * 项目名称
+		 * @return
+		 *
+		 */
+		public static function get projectName() : String
+		{
+			return sProjectName;
+		}
+
+		/**
+		 * 项目目录地址
+		 */
+		public static function get projectUrl() : String
+		{
+			return sProjectUrl;
+		}
+
+		/**
+		 * 项目资源目录
+		 * @return
+		 *
+		 */
+		public static function get projectResourceUrl() : String
+		{
+			return sProjectResourceUrl;
 		}
 	}
 }

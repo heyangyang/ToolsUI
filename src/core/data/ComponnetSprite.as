@@ -1,8 +1,10 @@
 package core.data
 {
-	public class MovieData extends ViewBase
+	
+
+	public class ComponnetSprite extends SViewBase
 	{
-		public function MovieData()
+		public function ComponnetSprite()
 		{
 			super();
 		}

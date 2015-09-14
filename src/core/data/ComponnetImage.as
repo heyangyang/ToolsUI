@@ -2,11 +2,11 @@ package core.data
 {
 	import manager.EventManager;
 
-	public class ImageData extends ViewBase
+	public class ComponnetImage extends SViewBase
 	{
 		public var button : Boolean;
 
-		public function ImageData()
+		public function ComponnetImage()
 		{
 			super();
 		}

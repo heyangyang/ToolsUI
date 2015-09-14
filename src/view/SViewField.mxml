@@ -4,6 +4,7 @@
 		 xmlns:mx="library://ns.adobe.com/flex/mx"
 		 title="属性"
 		 xmlns:view="view.*"
+		 fontFamily="SimSun"
 		 creationComplete="init(event)">
 	<fx:Script>
 		<![CDATA[
@@ -25,7 +26,7 @@
 
 			import core.Config;
 			import manager.EventManager;
-			import core.ExEvent;
+			import core.SEvent;
 			import manager.HistoryManager;
 
 
@@ -49,13 +50,13 @@
 				tabBar_itemClickHandler();
 			}
 
-			private function onUpdateHistroy(evt : ExEvent) : void
+			private function onUpdateHistroy(evt : SEvent) : void
 			{
 				if (box_history)
 					box_history.dataProvider = new ArrayCollection(HistoryManager.Ins().history_list);
 			}
 
-			private function onUpdateView(evt : ExEvent) : void
+			private function onUpdateView(evt : SEvent) : void
 			{
 				while (box.numChildren > 0)
 					box.removeChildAt(0);
@@ -165,7 +166,7 @@
 							{
 								try
 								{
-									var file : File = new File(Config.url_project + "\\" + tmp.@typeValue);
+									var file : File = new File(Config.projectUrl + "\\" + tmp.@typeValue);
 									var list : Array = file.getDirectoryListing();
 									var tmp_list : Array = [];
 									for (var i : int = 0; i < list.length; i++)
@@ -276,7 +277,7 @@
 				for (i = 0; i < len; i++)
 				{
 					select_list[i][field] += value;
-					select_list[i].data.updateData();
+					select_list[i].data.refresh();
 				}
 			}
 
@@ -301,7 +302,7 @@
 			width="100%"
 			height="100%"
 			id="box_history"
-			itemRenderer="view.HistoryRender"
+			itemRenderer="view.item.SItemHistory"
 			click="box_history_clickHandler(event)"/>
 	<mx:Accordion y="{tabBar.height}"
 				  id="accordion"
@@ -315,7 +316,7 @@
 		</mx:VBox>
 	</mx:Accordion>
 
-	<view:LayerPanel id="layer"
+	<view:SViewLayer id="layer"
 					 width="100%"
 					 height="25%"
 					 y="{accordion.height}"/>

@@ -4,7 +4,7 @@ package view.component
 	import flash.utils.setTimeout;
 
 	import core.Config;
-	import core.data.TabBarData;
+	import core.data.ComponnetTabBar;
 
 	public class CTabBar extends CSprite
 	{
@@ -27,7 +27,7 @@ package view.component
 		{
 			while (container.numChildren > 1)
 				container.removeChildAt(1);
-			var tmp_data : TabBarData = data as TabBarData;
+			var tmp_data : ComponnetTabBar = data as ComponnetTabBar;
 			if (data == null || tmp_data == null || !tmp_data.labelNames || !tmp_data.normal_res)
 				return;
 

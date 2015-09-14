@@ -4,6 +4,7 @@
 		 xmlns:mx="library://ns.adobe.com/flex/mx"
 		 width="100%"
 		 height="100%"
+		 fontFamily="SimSun"
 		 addedToStage="init(event)"
 		 title="资源">
 	<fx:Metadata>
@@ -22,7 +23,7 @@
 			import spark.events.TextOperationEvent;
 
 			import core.Config;
-			import core.ExEvent;
+			import core.SEvent;
 
 			import manager.EventManager;
 			import manager.LocalShareManager;
@@ -38,7 +39,7 @@
 				canvas.addElement(m_group);
 				controlBarContent = [canvas];
 				controlBarVisible = true;
-				var type : String = LocalShareManager.getInstance().get("res_type");
+				var type : String = LocalShareManager.get("res_type");
 				if (type)
 				{
 					var radio : RadioButton;
@@ -52,7 +53,7 @@
 				EventManager.addListener(EventManager.EVENT_RES_COMPLETE, onComplete);
 			}
 
-			private function onComplete(evt : ExEvent) : void
+			private function onComplete(evt : SEvent) : void
 			{
 				this.data = evt.data;
 				if (data == null)
@@ -131,7 +132,7 @@
 			{
 				searchText.text = "";
 				filterTreeByType(evt.target["label"]);
-				LocalShareManager.getInstance().save("res_type", evt.target["label"]);
+				LocalShareManager.save("res_type", evt.target["label"]);
 			}
 
 			private function filterTreeByType(type : String) : void

@@ -1,16 +1,16 @@
 package core
 {
-	import core.data.SpriteData;
-	import core.data.ViewConfig;
+	import core.data.ComponnetSprite;
+	import core.data.SUiObject;
 
 	public class CodeUtils
 	{
-		private var config_view : ViewConfig;
+		private var config_view : SUiObject;
 		public var code_public_var : String = "";
 		public var code_var : String = "";
 		public var code_import : String = "";
 
-		public function CodeUtils(config : ViewConfig)
+		public function CodeUtils(config : SUiObject)
 		{
 			this.config_view = config;
 		}
@@ -20,7 +20,7 @@ package core
 		 * @return
 		 *
 		 */
-		public static function getAsCode(config : ViewConfig) : String
+		public static function getAsCode(config : SUiObject) : String
 		{
 			var code_utils : CodeUtils = new CodeUtils(config);
 			return code_utils.asCode;
@@ -29,22 +29,22 @@ package core
 		public function get asCode() : String
 		{
 			//项目不同，以后需要修改
-			code_import += "import " + config_view.extends_name + END;
+			code_import += "import " + config_view.extendsName + END;
 			//项目不同，以后需要修改
-			var tmp : SpriteData = new SpriteData();
+			var tmp : ComponnetSprite = new ComponnetSprite();
 			tmp.type = "spr";
 			tmp.parseXml();
 			tmp.getAsCode(this);
 			//-----------------
 			var code : String = "";
 			var tmp_view_code : String = viewCode;
-			code += "package " + Config.getXmlByType("package")[0].@pkgName + "." + String(config_view.extends_name.split(".").pop()).toLocaleLowerCase() + enter;
+			code += "package " + Config.getXmlByType("package")[0].@pkgName + "." + String(config_view.extendsName.split(".").pop()).toLocaleLowerCase() + enter;
 			code += "{" + enter;
 			code += getSpace(1) + code_import.split(END).join(END + getSpace(1)) + enter;
-			code += getSpace(1) + "public class " + config_view.class_name + (" extends " + config_view.extends_name.split(".").pop()) + enter;
+			code += getSpace(1) + "public class " + config_view.className + (" extends " + config_view.extendsName.split(".").pop()) + enter;
 			code += getSpace(1) + "{" + enter;
 			code += getSpace(2) + code_public_var.split(END).join(END + getSpace(2)) + enter;
-			code += getSpace(2) + "public function " + config_view.class_name + "()" + enter;
+			code += getSpace(2) + "public function " + config_view.className + "()" + enter;
 			code += getSpace(2) + "{" + enter;
 			//项目不同，以后需要修改
 			code += superRes();
@@ -58,12 +58,12 @@ package core
 		private function superRes() : String
 		{
 			var str : String = "";
-			var len : int = config_view.res_list.length;
+			var len : int = config_view.resourceList.length;
 			for (var i : int = 0; i < len; i++)
 			{
-				if (config_view.res_list[i].indexOf("main") == -1)
+				if (config_view.resourceList[i].indexOf("main") == -1)
 				{
-					str = config_view.res_list[i];
+					str = config_view.resourceList[i];
 					str = str.split(".").shift();
 					break;
 				}
@@ -93,11 +93,11 @@ package core
 			//暂时用到，以后需要修改
 			code += getSpace(space_num) + "addChild(mPanel);" + enter;
 			//优先解析出代码
-			var len : int = config_view.comList.length;
+			var len : int = config_view.viewList.length;
 			var content : String = "";
 			for (var i : int = 0; i < len; i++)
 			{
-				content += getSpace(space_num) + config_view.comList[i].getAsCode(this).split(END).join(END + getSpace(space_num)) + enter;
+				content += getSpace(space_num) + config_view.viewList[i].getAsCode(this).split(END).join(END + getSpace(space_num)) + enter;
 			}
 			//局部函数声明
 			code += getSpace(space_num) + code_var.split(END).join(END + getSpace(space_num));

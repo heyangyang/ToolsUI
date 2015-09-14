@@ -2,14 +2,14 @@ package core.data
 {
 	import view.component.CList;
 
-	public class ListData extends ViewBase
+	public class ComponnetList extends SViewBase
 	{
 		public var render : String;
 		public var layout : String;
 		public var vGap : int;
 		public var hGap : int;
 
-		public function ListData()
+		public function ComponnetList()
 		{
 			super();
 		}

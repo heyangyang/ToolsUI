@@ -11,22 +11,42 @@ package manager
 	 */
 	public class LocalShareManager
 	{
-		protected var local_data : Object;
-		protected var PATH : String = "toolsUi";
-		public static var USER : String = "user_pwd";
+		/**
+		 * 程序地址
+		 */
+		public static const PROGRAM : String = "program";
+		/**
+		 * 项目地址
+		 */
+		public static const PROJECT : String = "project_url";
 		private static var instance : LocalShareManager;
 
-		public static function getInstance() : LocalShareManager
+
+		public static function get(property : String) : *
 		{
-			if (instance == null)
+			if (!instance)
 			{
 				instance = new LocalShareManager();
 				instance.init();
 			}
-			return instance;
+			return instance.get(property);
 		}
 
-		public function LocalShareManager(path : String = "tjzh_data")
+		public static function save(property : String, data : *) : void
+		{
+			if (!instance)
+			{
+				instance = new LocalShareManager();
+				instance.init();
+			}
+			instance.save(property, data);
+		}
+
+
+		protected var local_data : Object;
+		protected var PATH : String;
+
+		public function LocalShareManager(path : String = "ToolsUI")
 		{
 			PATH = path;
 		}
@@ -46,29 +66,12 @@ package manager
 				local_data = bytes.readObject();
 		}
 
-		public var m_pwd : String;
-		public var m_username : String;
-		public var m_area : String;
-		public var m_rangeArea : String;
-
-		public function getUserPwd() : void
-		{
-			var str : String = getInstance().get(USER);
-			if (str)
-			{
-				m_pwd = str.split("|")[0];
-				m_username = str.split("|")[1];
-				m_area = str.split("|")[2];
-				m_rangeArea = str.split("|")[3];
-			}
-		}
-
-		public function get(property : String, isAddMd5 : Boolean = true) : *
+		public function get(property : String) : *
 		{
 			return local_data[property];
 		}
 
-		public function save(property : String, data : *, isAddMd5 : Boolean = true) : Boolean
+		public function save(property : String, data : *) : void
 		{
 			try
 			{
@@ -79,10 +82,9 @@ package manager
 			{
 				trace(e);
 			}
-			return true;
 		}
 
-		public function clear(property : String, isAddMd5 : Boolean = true) : Boolean
+		public function clear(property : String) : Boolean
 		{
 			try
 			{
@@ -107,15 +109,6 @@ package manager
 			var bytes : ByteArray = new ByteArray();
 			bytes.writeObject(local_data);
 			EncryptedLocalStore.setItem(PATH, bytes);
-		}
-
-		/**
-		 * 存儲信息
-		 *
-		 */
-		public function cacheSaveData() : void
-		{
-			this.flush();
 		}
 
 	}

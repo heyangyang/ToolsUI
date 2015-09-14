@@ -6,7 +6,7 @@ package core.data
 	import view.component.CSprite;
 	import view.component.CTextDisplay;
 
-	public class ViewBase extends Object
+	public class SViewBase extends Object
 	{
 		private static const BASE_VIEW : String = "btn,s9,img,txt,spr,mc";
 		public var index : int = 0;
@@ -49,7 +49,7 @@ package core.data
 		public var scaleX : Number;
 		public var scaleY : Number;
 
-		public function ViewBase()
+		public function SViewBase()
 		{
 
 		}
@@ -193,7 +193,7 @@ package core.data
 			}
 		}
 
-		public function updateData() : void
+		public function refresh() : void
 		{
 			//目前组件不可旋转，不可缩放，强制设为0
 			display.rotation = 0;

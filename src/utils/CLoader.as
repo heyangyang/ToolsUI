@@ -6,10 +6,11 @@ package utils
 	import flash.system.ApplicationDomain;
 	import flash.system.LoaderContext;
 	import flash.utils.ByteArray;
-
+	
 	import mx.controls.Alert;
-
+	
 	import core.Config;
+	
 	import manager.EventManager;
 	import manager.LocalShareManager;
 
@@ -52,8 +53,8 @@ package utils
 			try
 			{
 				var file : File = new File();
-				if (LocalShareManager.getInstance().get("project"))
-					file.nativePath = LocalShareManager.getInstance().get("project");
+				if (LocalShareManager.get(LocalShareManager.PROGRAM))
+					file.nativePath = LocalShareManager.get(LocalShareManager.PROGRAM);
 				file.browseForDirectory("重新选择资源目录");
 				file.addEventListener(Event.SELECT, onSelect);
 			}
@@ -64,10 +65,8 @@ package utils
 
 			function onSelect(evt : Event) : void
 			{
-				Config.res_url = file.nativePath + "\\";
-				Config.saveProject();
-				LocalShareManager.getInstance().save("project", file.nativePath);
-				EventManager.getInstance().dispatch(EventManager.SHOW_VIEW);
+				Config.saveProjectData("", "",  file.nativePath);
+				EventManager.dispatch(EventManager.SHOW_VIEW);
 			}
 		}
 

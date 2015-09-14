@@ -2,11 +2,11 @@ package core.data
 {
 	import view.component.CView;
 
-	public class ViewData extends ViewBase
+	public class SViewData extends SViewBase
 	{
 		public var view : String;
 
-		public function ViewData()
+		public function SViewData()
 		{
 			super();
 		}

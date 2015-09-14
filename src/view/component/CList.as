@@ -7,8 +7,8 @@ package view.component
 
 	import core.Config;
 	import manager.EventManager;
-	import core.data.ListData;
-	import core.data.ViewConfig;
+	import core.data.ComponnetList;
+	import core.data.SUiObject;
 
 	import utils.CLoader;
 	import utils.FilesUtil;
@@ -34,24 +34,24 @@ package view.component
 			var mList : CSprite = this;
 			while (container.numChildren > 2)
 				container.removeChildAt(2);
-			var listData : ListData = ListData(data);
+			var listData : ComponnetList = ComponnetList(data);
 			var dataXml : XML = listData.dataXml;
-			var nativePath : String = Config.url_project + "\\" + dataXml.field.(@name == "render")[0].@typeValue + "\\" + listData.render;
+			var nativePath : String = Config.projectUrl + "\\" + dataXml.field.(@name == "render")[0].@typeValue + "\\" + listData.render;
 			var file : File = new File(nativePath);
 			var loadIndex : int = 0;
 
 			if (file.exists && listData.render != "")
 			{
-				var viewConfig : ViewConfig = ViewConfig.parse(FilesUtil.getBytesFromeFile(nativePath, true));
-				var loadCount : int = viewConfig.res_list.length;
+				var viewConfig : SUiObject = SUiObject.parseByteArray(FilesUtil.getBytesFromeFile(nativePath, true));
+				var loadCount : int = viewConfig.resourceList.length;
 
 				for (var i : int = 0; i < loadCount; i++)
 				{
-					new CLoader(Config.res_url + viewConfig.res_list[i], complement, viewConfig);
+					new CLoader(Config.projectResourceUrl + viewConfig.resourceList[i], complement, viewConfig);
 				}
 			}
 
-			function complement(bytes : ByteArray, viewConfig : ViewConfig) : void
+			function complement(bytes : ByteArray, viewConfig : SUiObject) : void
 			{
 				if (++loadIndex < loadCount)
 					return;

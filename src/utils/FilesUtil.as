@@ -364,29 +364,19 @@ package utils
 		public static function getUTFBytesFromFile(nativePath : String, unCompress : Boolean = false) : String
 		{
 			var value : String;
+			var bytes : ByteArray = new ByteArray();
 
-			try
-			{
-				var bytes : ByteArray = new ByteArray();
+			var file : File = new File(nativePath);
+			var stream : FileStream = new FileStream();
+			stream.open(file, FileMode.READ);
+			//data = stream.readUTFBytes(stream.bytesAvailable);
+			stream.readBytes(bytes, 0, stream.bytesAvailable);
+			stream.close();
 
-				var file : File = new File(nativePath);
-				var stream : FileStream = new FileStream();
-				stream.open(file, FileMode.READ);
-				//data = stream.readUTFBytes(stream.bytesAvailable);
-				stream.readBytes(bytes, 0, stream.bytesAvailable);
-				stream.close();
+			if (unCompress)
+				bytes.uncompress();
 
-				if (unCompress)
-					bytes.uncompress();
-
-				value = bytes.readUTFBytes(bytes.length);
-
-				bytes = null;
-			}
-			catch (e : Error)
-			{
-				trace("读取文件出错", e);
-			}
+			value = bytes.readUTFBytes(bytes.length);
 			return value;
 		}
 
@@ -401,20 +391,12 @@ package utils
 		public static function getBytesFromeFile(nativePath : String, unCompress : Boolean = false) : ByteArray
 		{
 			var bytes : ByteArray = new ByteArray();
-
-			try
-			{
-				var file : File = new File(nativePath);
-				var stream : FileStream = new FileStream();
-				stream.open(file, FileMode.READ);
-				stream.readBytes(bytes, 0, stream.bytesAvailable);
-				stream.close();
-				unCompress && bytes.uncompress();
-			}
-			catch (e : Error)
-			{
-				Config.alert("读取文件出错 : " + nativePath);
-			}
+			var file : File = new File(nativePath);
+			var stream : FileStream = new FileStream();
+			stream.open(file, FileMode.READ);
+			stream.readBytes(bytes, 0, stream.bytesAvailable);
+			stream.close();
+			unCompress && bytes.uncompress();
 			return bytes;
 		}
 	}

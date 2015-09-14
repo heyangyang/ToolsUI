@@ -1,10 +1,10 @@
 package manager
 {
 	import core.Config;
-
+	import core.data.SUiObject;
+	import core.data.SViewBase;
 
 	import view.component.CSprite;
-	import core.data.ViewBase;
 
 	/**
 	 * 历史记录处理
@@ -20,10 +20,19 @@ package manager
 		public static function Ins() : HistoryManager
 		{
 			if (instance == null)
+			{
 				instance = new HistoryManager();
+				instance.init();
+			}
 			return instance;
 		}
 
+		private var mCurrent : SUiObject;
+
+		private function init() : void
+		{
+			mCurrent = Config.current;
+		}
 		public var history_list : Array = [];
 
 		public function get length() : int
@@ -56,7 +65,7 @@ package manager
 			{
 				history_data = tmp_history_list[i];
 				//历史记录操作的原数据
-				var viewData : ViewBase = history_data.data;
+				var viewData : SViewBase = history_data.data;
 				if (history_change_list.type == ADD)
 				{
 					viewData.dispose();
@@ -82,7 +91,7 @@ package manager
 		{
 			var len : int = list.length;
 			var tmp_history : Array = [];
-			var viewData : ViewBase;
+			var viewData : SViewBase;
 			var display : CSprite;
 			for (var i : int = 0; i < len; i++)
 			{
@@ -90,11 +99,11 @@ package manager
 				if (display == null)
 					continue;
 				//获得当前对象
-				viewData = Config.view.getTargetData(display);
+				viewData = mCurrent.getTargetData(display);
 				//记录数据
 				tmp_history.push(viewData.historyData);
 				//更新数据
-				viewData.updateData();
+				viewData.refresh();
 			}
 
 			if (tmp_history.length > 0)

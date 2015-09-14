@@ -4,16 +4,16 @@
 		   xmlns:mx="library://ns.adobe.com/flex/mx"
 		   creationComplete="init(event)"
 		   backgroundColor="0x666666"
+		   fontFamily="SimSun"
 		   xmlns:view="view.*">
 	<fx:Script>
 		<![CDATA[
-			import mx.controls.Alert;
 			import mx.events.FlexEvent;
 			import mx.events.ListEvent;
 			
 			import core.Config;
-			import core.ExEvent;
-			import core.data.ViewConfig;
+			import core.SEvent;
+			import core.data.SUiObject;
 			
 			import manager.EventManager;
 			
@@ -24,129 +24,125 @@
 			[Bindable]
 			public static var classArray : Array = [];
 			[Bindable]
-			private var fileXml : XML;
-			private var container : Sprite;
+			private var mFileXml : XML;
+			private var previewContainer : Sprite;
 
 			protected function init(event : FlexEvent) : void
 			{
-				container = new Sprite();
-				uiComponent.addChild(container);
+				previewContainer = new Sprite();
+				uiPreview.addChild(previewContainer);
 				EventManager.addListener(EventManager.SHOW_VIEW_TREE, onShowViewHanlder);
 				EventManager.addListener(EventManager.SHOW_COMPONENT, onShowComponentHanlder);
 				EventManager.addListener(EventManager.EVENT_RES_COMPLETE, onComplete);
 			}
 
-			private function onComplete(evt : ExEvent) : void
+			private function onComplete(evt : SEvent) : void
 			{
-				while (container.numChildren > 0)
-					container.removeChildAt(0);
+				while (previewContainer.numChildren > 0)
+					previewContainer.removeChildAt(0);
 			}
 
 			private function onShowViewHanlder(evt : Event) : void
 			{
-				var file : File = new File(Config.url_project);
-				if (!file.exists)
+				tree_panel.title = "项目 : " + Config.projectName;
+				var rootFile : File = new File(Config.projectUrl);
+				if (!rootFile.exists)
 				{
-					Alert.show("项目不存在，无法创建界面列表!");
+					Config.error("项目不存在，无法创建界面列表!");
 					return;
 				}
-				var index : int = 0;
-				fileXml = <root label={file.name}/>;
-				createTree(file, fileXml, true);
+				var tCount : int = 0;
+				mFileXml = <root label={rootFile.name}/>;
+				createTreeItems(rootFile, mFileXml, true);
 
-				function createTree(file : File, xml : XML, isRoot : Boolean) : void
+				view_tree.dataProvider = tCount > 0 ? mFileXml : null;
+				view_tree.labelField = "@label";
+				view_tree.validateNow();
+
+				function createTreeItems(file : File, xml : XML, isRoot : Boolean) : void
 				{
 					var list : Array = file.getDirectoryListing();
 					var len : int = list.length;
 					if (len == 0)
 						return;
-					var tmp_file : File;
-					var tmp_xml : XML = isRoot ? xml : <node label={file.name}/>;
+					var tFile : File;
+					var tXml : XML = isRoot ? xml : <node label={file.name}/>;
 					for (var i : int = 0; i < len; i++)
 					{
-						tmp_file = list[i];
-						if (tmp_file.isDirectory)
+						tFile = list[i];
+						if (tFile.isDirectory)
 						{
-							createTree(tmp_file, tmp_xml, false);
+							createTreeItems(tFile, tXml, false);
 							continue;
 						}
-						if (tmp_file.name.indexOf(".ui") == -1 || tmp_file.name.indexOf(".uip") >= 0)
+						if (tFile.extension != Config.VIEW_EXTENSION.substring(1))
 							continue;
-						tmp_xml.appendChild(<node label={tmp_file.name} nativePath={tmp_file.nativePath}/>);
-						index++;
+						tXml.appendChild(<node label={tFile.name} nativePath={tFile.nativePath}/>);
+						tCount++;
 					}
 
-					!isRoot && fileXml.appendChild(tmp_xml);
+					!isRoot && mFileXml.appendChild(tXml);
 				}
-				view_tree.labelField = "@label";
-				if (index > 0)
-				{
-					tree_panel.title = "项目 : " + file.name;
-					view_tree.dataProvider = fileXml;
-				}
-				else
-				{
-					tree_panel.title = "页面";
-					view_tree.dataProvider = null;
-				}
-				view_tree.validateNow();
-				view_tree.selectedIndex = 0;
-				view_tree.expandChildrenOf(view_tree.selectedItem, true);
 			}
+
 
 			private function onItemClickHanlder(evt : ListEvent) : void
 			{
 				var open_url : String = evt.itemRenderer.data.@label;
-				if (open_url.indexOf(".ui") == -1)
+				//如果是目录，则打开扩展
+				if (open_url.indexOf(Config.VIEW_EXTENSION) == -1)
 				{
+					//先把没有选中的目录收起来
 					var len : int = view_tree.openItems.length;
 					for (var i : int = 0; i < len; i++)
 					{
 						if (view_tree.selectedItem == view_tree.openItems[i])
 							continue;
 						view_tree.expandChildrenOf(view_tree.openItems[i], false);
+						break;
 					}
+					//打开选中目录
 					view_tree.expandChildrenOf(view_tree.selectedItem, view_tree.isItemOpen(view_tree.selectedItem) ? false : true);
 					return;
 				}
 				CLoading.getInstance().show();
 				var url : String = evt.itemRenderer.data.@nativePath;
 				var bytes : ByteArray = FilesUtil.getBytesFromeFile(url, true);
-				Config.view = ViewConfig.parse(bytes, true);
-				EventManager.getInstance().dispatch(EventManager.SHOW_VIEW);
+				Config.setCurrentUI(SUiObject.parseByteArray(bytes));
 			}
 
-			private function onShowComponentHanlder(evt : ExEvent) : void
+			private function onShowComponentHanlder(evt : SEvent) : void
 			{
-				while (container.numChildren > 0)
-					container.removeChildAt(0);
+				while (previewContainer.numChildren > 0)
+					previewContainer.removeChildAt(0);
 				var xml : XML = evt.data as XML;
 				var name : String = xml.@label;
 				var child : DisplayObject = Config.createComponetByName(name);
-				container.addChild(child); 
+				previewContainer.addChild(child);
 				var scale : Number = 1;
-				if (child.width > uiComponent.width)
-					scale = uiComponent.width / child.width;
-				else if (child.height > uiComponent.height)
-					scale = uiComponent.height / child.height;
+				if (child.width > uiPreview.width)
+					scale = uiPreview.width / child.width;
+				else if (child.height > uiPreview.height)
+					scale = uiPreview.height / child.height;
 				else
 				{
-					scale = uiComponent.height / child.height;
-					if (child.width * scale > uiComponent.width)
-						scale = uiComponent.width / (child.width * scale);
-					else if (child.height * scale > uiComponent.height)
-						scale = uiComponent.height / (child.height * scale);
+					scale = uiPreview.height / child.height;
+					if (child.width * scale > uiPreview.width)
+						scale = uiPreview.width / (child.width * scale);
+					else if (child.height * scale > uiPreview.height)
+						scale = uiPreview.height / (child.height * scale);
 				}
 
 				var childx : int = 0, childy : int = 0;
-				if (child is DisplayObjectContainer)
+				var container : DisplayObjectContainer = child as DisplayObjectContainer;
+				if (container)
 				{
-					var len : int = DisplayObjectContainer(child).numChildren;
+					var len : int = container.numChildren;
 					var tmp_child : DisplayObject;
 
 					for (var i : int = 0; i < len; i++)
 					{
-						tmp_child = DisplayObjectContainer(child).getChildAt(i);
+						tmp_child = container.getChildAt(i);
 						if (tmp_child.x < childx)
 							childx = tmp_child.x;
 						if (tmp_child.y < childy)
@@ -154,8 +150,8 @@
 					}
 				}
 				child.scaleX = child.scaleY = scale;
-				child.x = (uiComponent.width - child.width * scale - childx) * 0.5;
-				child.y = (uiComponent.height - child.height * scale - childy) * 0.5;
+				child.x = (uiPreview.width - child.width * scale - childx) * 0.5;
+				child.y = (uiPreview.height - child.height * scale - childy) * 0.5;
 			}
 		]]>
 	</fx:Script>
@@ -173,6 +169,7 @@
 			<mx:Tree width="100%"
 					 height="100%"
 					 id="view_tree"
+					 selectionColor="0xffff00"
 					 showRoot="false"
 					 itemClick="onItemClickHanlder(event)"/>
 		</s:Panel>
@@ -182,8 +179,8 @@
 				 height="25%">
 			<mx:UIComponent width="100%"
 							height="100%"
-							id="uiComponent"/>
+							id="uiPreview"/>
 		</s:Panel>
-		<view:ResourcePanel/>
+		<view:SViewResource/>
 	</s:VGroup>
 </mx:Canvas>

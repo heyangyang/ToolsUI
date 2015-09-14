@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TitleWindow xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   fontFamily="SimSun"
+			   creationComplete="initWindows(event)"
+			   close="onCloseHandler(event)">
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			import mx.managers.PopUpManager;
+			
+			import core.Config;
+			
+			import manager.EventManager;
+
+			private static var sCurWindow : SWindowBase;
+
+			private function initWindows(event : FlexEvent) : void
+			{
+				sCurWindow && sCurWindow.onCloseHandler();
+				sCurWindow = this;
+				EventManager.addListener(Event.RESIZE, onResizeHandler);
+				EventManager.addListener(EventManager.EXIT_WINODW, onCloseHandler);
+				onResizeHandler(null);
+				init();
+			}
+
+			protected function init() : void
+			{
+
+			}
+
+			protected function onResizeHandler(event : Event) : void
+			{
+				x = (Config.stage.stageWidth - width) * .5;
+				y = (Config.stage.stageHeight - height) * .5;
+			}
+
+			protected function onCloseHandler(event : Event = null) : void
+			{
+				PopUpManager.removePopUp(this);
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+</s:TitleWindow>

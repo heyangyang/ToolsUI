@@ -3,8 +3,8 @@ package view.component
 	import flash.display.Sprite;
 	import flash.utils.setTimeout;
 
-	import core.data.LayerData;
-	import core.data.ViewBase;
+	import core.data.SLayerData;
+	import core.data.SViewBase;
 
 	import manager.EventManager;
 
@@ -13,13 +13,13 @@ package view.component
 	 * @author Administrator
 	 *
 	 */
-	public class CLayerView extends Sprite
+	public class SLayerView extends Sprite
 	{
 		private var tab_index : int = 0;
 		public var list_layer : Array = [];
-		public var cur_layer : LayerData;
+		public var cur_layer : SLayerData;
 
-		public function CLayerView()
+		public function SLayerView()
 		{
 			super();
 		}
@@ -45,7 +45,7 @@ package view.component
 		{
 			if (cur_layer == null)
 				return;
-			var tmp_layer : LayerData;
+			var tmp_layer : SLayerData;
 			if (layer_index == -1)
 				tmp_layer = cur_layer;
 			else
@@ -58,8 +58,8 @@ package view.component
 			if (cur_layer == null)
 				return;
 			if (child.data == null)
-				child.data = new ViewBase();
-			var tmp_layer : LayerData;
+				child.data = new SViewBase();
+			var tmp_layer : SLayerData;
 			if (layer_index == -1)
 				tmp_layer = cur_layer;
 			else
@@ -88,7 +88,7 @@ package view.component
 		 * @return
 		 *
 		 */
-		public function getLayerByIndex(index : int) : LayerData
+		public function getLayerByIndex(index : int) : SLayerData
 		{
 //			if (index >= list_layer.length)
 //				return list_layer[list_layer.length - 1];
@@ -101,9 +101,9 @@ package view.component
 		 * @return
 		 *
 		 */
-		public function addLayer(name : String = null) : LayerData
+		public function addLayer(name : String = null) : SLayerData
 		{
-			var layer : LayerData = new LayerData();
+			var layer : SLayerData = new SLayerData();
 			layer.name = name == null ? "图层 " + list_layer.length : name;
 			layer.layer = new Sprite();
 			layer.visible = true;
@@ -118,7 +118,7 @@ package view.component
 		 * @param layer
 		 *
 		 */
-		public function removeLayer(layer : LayerData = null) : void
+		public function removeLayer(layer : SLayerData = null) : void
 		{
 			if (layer == null)
 				layer = cur_layer;
@@ -135,7 +135,7 @@ package view.component
 
 		public function updateLayerIndex() : void
 		{
-			var layer : LayerData;
+			var layer : SLayerData;
 			var len : int = list_layer.length;
 			for (var i : int = 0; i < len; i++)
 			{
@@ -144,7 +144,7 @@ package view.component
 			}
 		}
 
-		public function set selectItem(value : LayerData) : void
+		public function set selectItem(value : SLayerData) : void
 		{
 			selectIndex = list_layer.indexOf(value);
 		}
@@ -180,7 +180,7 @@ package view.component
 		{
 			var len : int = list_layer.length;
 			var return_list : Array = [];
-			var layer : LayerData;
+			var layer : SLayerData;
 			for (var i : int = 0; i < len; i++)
 			{
 				layer = list_layer[i];
@@ -205,7 +205,7 @@ package view.component
 		public function parse(list : Array) : void
 		{
 			var len : int = list.length;
-			var layer : LayerData;
+			var layer : SLayerData;
 			for (var i : int = 0; i < len; i++)
 			{
 				layer = addLayer();
@@ -217,7 +217,7 @@ package view.component
 		public function get saveData() : Object
 		{
 			var list : Array = [];
-			var layer : LayerData;
+			var layer : SLayerData;
 			var len : int = list_layer.length;
 			for (var i : int = 0; i < len; i++)
 			{
@@ -232,12 +232,12 @@ package view.component
 			setTimeout(EventManager.dispatch, 0, EventManager.UPDATE_LAYER);
 		}
 
-		private static var instance : CLayerView;
+		private static var instance : SLayerView;
 
-		public static function getInstance() : CLayerView
+		public static function getInstance() : SLayerView
 		{
 			if (instance == null)
-				instance = new CLayerView();
+				instance = new SLayerView();
 			return instance;
 		}
 	}

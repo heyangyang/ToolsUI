@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<window:SWindowBase xmlns:fx="http://ns.adobe.com/mxml/2009"
+					xmlns:s="library://ns.adobe.com/flex/spark"
+					xmlns:mx="library://ns.adobe.com/flex/mx"
+					width="270"
+					height="220"
+					title="设置"
+					xmlns:window="view.window.*">
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.ArrayCollection;
+
+			import core.Config;
+			import core.data.SUiObject;
+
+			import manager.EventManager;
+
+			import utils.FilesUtil;
+
+			private var mCurrent : SUiObject;
+
+			protected override function init() : void
+			{
+				mCurrent = Config.current;
+				var bytes : ByteArray = FilesUtil.getBytesFromeFile(mCurrent.nativeUrl, true);
+				if (bytes == null)
+				{
+					Config.error("找不到文件:" + mCurrent.nativeUrl);
+					return;
+				}
+				var data : SUiObject = SUiObject.parseByteArray(bytes);
+				txt_width.text = data.width + "";
+				txt_height.text = data.height + "";
+				txt_name.text = data.className;
+				txt_packName.text = data.packageName;
+
+				comBox_extends.textInput.editable = false;
+				var xmllist : XMLList = Config.getXmlByType("extends")[0].field;
+				var dataList : Array = [];
+				var selectedIndex : int;
+				for each (var xml : XML in xmllist)
+				{
+					if (xml.@name.toString() == data.extendsName)
+						selectedIndex = dataList.length;
+					dataList.push({type: xml.@name.toString().split(".").pop(), extends_name: xml.@name.toString()});
+				}
+				comBox_extends.dataProvider = new ArrayCollection(dataList);
+				comBox_extends.selectedIndex = selectedIndex;
+			}
+
+			protected function changeClickHandler(event : MouseEvent) : void
+			{
+				var file : File = new File(mCurrent.nativeUrl);
+				//删除自己
+				file.exists && file.deleteFile();
+				var data : SUiObject = mCurrent;
+				data.width = int(txt_width.text);
+				data.height = int(txt_height.text);
+				data.className = txt_name.text;
+				data.packageName = txt_packName.text;
+				data.extendsName = comBox_extends.selectedItem.extends_name;
+				EventManager.dispatch(EventManager.SAVE_VIEW, data);
+				EventManager.dispatch(EventManager.SHOW_VIEW_TREE);
+				//如果目录空了，则删除目录
+				file = file.parent;
+				if (file && file.getDirectoryListing().length == 0)
+					file.deleteDirectory();
+				onCloseHandler();
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<s:VGroup paddingTop="10"
+			  paddingLeft="10">
+		<s:HGroup>
+			<s:Label text="类名："
+					 paddingTop="6"/>
+			<s:TextInput id="txt_name"
+						 width="200"/>
+		</s:HGroup>
+		<s:HGroup>
+			<s:Label text="包名："
+					 paddingTop="6"/>
+			<s:TextInput id="txt_packName"
+						 width="200"/>
+		</s:HGroup>
+		<s:HGroup>
+			<s:Label text="继承："
+					 fontSize="13"
+					 paddingTop="4"/>
+			<s:ComboBox fontSize="13"
+						width="200"
+						maxChars="16"
+						id="comBox_extends"
+						labelField="type"/>
+		</s:HGroup>
+		<s:HGroup>
+			<s:Label text="宽  ："
+					 paddingTop="6"/>
+			<s:TextInput id="txt_width"
+						 width="200"/>
+		</s:HGroup>
+		<s:HGroup>
+			<s:Label text="高  ："
+					 paddingTop="6"/>
+			<s:TextInput id="txt_height"
+						 width="200"/>
+		</s:HGroup>
+		<s:Button width="100%"
+				  height="25"
+				  label="修     改"
+				  color="0xffff00"
+				  click="changeClickHandler(event)"/>
+	</s:VGroup>
+</window:SWindowBase>

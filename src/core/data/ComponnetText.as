@@ -1,15 +1,16 @@
 package core.data
 {
-	import view.component.CButton;
+	import view.component.CTextDisplay;
 
-	public class ButtonData extends ViewBase
+	public class ComponnetText extends SViewBase
 	{
 		public var text : String = "";
-		public var fontColor : String;
 		public var fontSize : int;
+		public var fontColor : String = "";
+		public var align : String;
 		public var bold : Boolean;
 
-		public function ButtonData()
+		public function ComponnetText()
 		{
 			super();
 		}
@@ -25,8 +26,8 @@ package core.data
 			tmp.text = text;
 			tmp.fontSize = fontSize;
 			tmp.fontColor = fontColor;
+			tmp.align = align;
 			tmp.bold = bold;
-			tmp.touchable = true;
 			return tmp;
 		}
 
@@ -41,21 +42,19 @@ package core.data
 			text = obj.text;
 			fontSize = obj.fontSize;
 			fontColor = obj.fontColor;
+			align = obj.align;
 			bold = obj.bold;
-			touchable = true;
 		}
 
 		override public function updateView() : void
 		{
 			super.updateView();
-			var btn : CButton = display as CButton;
-			if (btn == null)
-				return;
-			btn.text = text;
-			btn.fontSize = fontSize;
-			btn.fontColor = fontColor;
-			btn.bold = bold;
-			touchable = true;
+			var txt_dis : CTextDisplay = display as CTextDisplay;
+			txt_dis.text = text;
+			txt_dis.fontSize = fontSize;
+			txt_dis.fontColor = fontColor;
+			txt_dis.bold = bold;
+			txt_dis.align = align;
 		}
 
 	}

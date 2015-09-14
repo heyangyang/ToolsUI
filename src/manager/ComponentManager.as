@@ -1,10 +1,11 @@
 package manager
 {
 	import core.Config;
-	import core.data.LayerData;
-	import core.data.ViewBase;
+	import core.data.SLayerData;
+	import core.data.SUiObject;
+	import core.data.SViewBase;
 
-	import view.component.CLayerView;
+	import view.component.SLayerView;
 	import view.component.CSprite;
 
 	/**
@@ -23,10 +24,19 @@ package manager
 		public static function Ins() : ComponentManager
 		{
 			if (instance == null)
+			{
 				instance = new ComponentManager();
+				instance.init();
+			}
 			return instance;
 		}
 
+		private var mCurent : SUiObject;
+
+		private function init() : void
+		{
+			mCurent = Config.current;
+		}
 		public var list : Vector.<CSprite> = new Vector.<CSprite>();
 		private var copy_list : Vector.<CSprite> = new Vector.<CSprite>();
 		private var cut_list : Vector.<CSprite> = new Vector.<CSprite>();
@@ -42,9 +52,9 @@ package manager
 			addHistory(HistoryManager.CHANGE);
 			var len : int = length, i : int;
 			for (i = 0; i < len; i++)
-				Config.view.deleteTarget(getIndex(i));
+				mCurent.deleteTarget(getIndex(i));
 			removeAll();
-			CLayerView.getInstance().notifyUpdate();
+			SLayerView.getInstance().notifyUpdate();
 		}
 
 		/**
@@ -54,12 +64,13 @@ package manager
 		{
 			removeAll();
 			var len : int, i : int;
-			var display : CSprite, viewDate : ViewBase, layData : LayerData;
-			var layer : CLayerView = CLayerView.getInstance();
-			len = Config.view.comList.length;
+			var display : CSprite, viewDate : SViewBase, layData : SLayerData;
+			var layer : SLayerView = SLayerView.getInstance();
+			var current : SUiObject = mCurent;
+			len = current.viewList.length;
 			for (i = 0; i < len; i++)
 			{
-				viewDate = Config.view.comList[i];
+				viewDate = current.viewList[i];
 				layData = layer.getLayerByIndex(viewDate.layer_index);
 				if (!layData.visible || layData.lock)
 					continue;
@@ -103,8 +114,8 @@ package manager
 			isChange = true;
 			removeAll()
 			var len : int = tmp_list.length;
-			var display : CSprite, viewDate : ViewBase, child : CSprite;
-			var layer : CLayerView = CLayerView.getInstance();
+			var display : CSprite, viewDate : SViewBase, child : CSprite;
+			var layer : SLayerView = SLayerView.getInstance();
 			var offsetX : int = tmp_list[0].width * 0.5 * copy_count;
 			var offsetY : int = tmp_list[0].height * 0.5 * copy_count;
 			for (var i : int = 0; i < len; i++)
@@ -114,7 +125,7 @@ package manager
 				child = createComponent(viewDate.res);
 				if (child == null)
 					continue;
-				Config.view.create(viewDate.res, child, viewDate.swf, viewDate.type, 1, 1, 1, 1);
+				mCurent.create(viewDate.res, child, viewDate.swf, viewDate.type, 1, 1, 1, 1);
 				child.data.parse(viewDate.data);
 				child.data.updateView();
 				//复制到当前图层上
@@ -145,8 +156,8 @@ package manager
 			tmp_list = tmp_list.concat(list);
 			tmp_list.sort(sort);
 			var len : int = tmp_list.length, comIndex : int;
-			var display : CSprite, viewDate : ViewBase, child : CSprite;
-			var layer : CLayerView = CLayerView.getInstance();
+			var display : CSprite, viewDate : SViewBase, child : CSprite;
+			var layer : SLayerView = SLayerView.getInstance();
 
 			for (var i : int = 0; i < len; i++)
 			{
@@ -221,7 +232,7 @@ package manager
 			for (i = 0; i < len; i++)
 			{
 				list[i][field] += value;
-				list[i].data.updateData();
+				list[i].data.refresh();
 			}
 			isChange = true;
 		}
@@ -281,7 +292,7 @@ package manager
 				{
 					display = list[i];
 					display[field] = isMax ? value - display[other] : value;
-					display.data.updateData();
+					display.data.refresh();
 				}
 				isChange = true;
 			}
@@ -316,7 +327,7 @@ package manager
 				display = list[i];
 				display[field] = value;
 				value += (field == "x" ? display.width : display.height) + gap;
-				display.data.updateData();
+				display.data.refresh();
 			}
 			isChange = true;
 		}
