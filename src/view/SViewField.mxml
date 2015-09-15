@@ -25,7 +25,7 @@
 			import spark.components.VGroup;
 
 			import core.Config;
-			import manager.EventManager;
+			import manager.SEventManager;
 			import core.SEvent;
 			import manager.HistoryManager;
 
@@ -45,8 +45,8 @@
 
 			protected function init(event : FlexEvent) : void
 			{
-				EventManager.addListener(EventManager.UPDATE_FIELD, onUpdateView);
-				EventManager.addListener(EventManager.UPDATE_HISTORY, onUpdateHistroy);
+				SEventManager.addListener(SEventManager.UPDATE_FIELD, onUpdateView);
+				SEventManager.addListener(SEventManager.UPDATE_HISTORY, onUpdateHistroy);
 				tabBar_itemClickHandler();
 			}
 
@@ -234,7 +234,7 @@
 					display.data.res = value;
 					//有这个资源才转换
 					if (!Config.createComponetByName(display.data.res).isLostRes)
-						EventManager.dispatch(EventManager.CHANGE_COMPONENT, display.data);
+						SEventManager.dispatch(SEventManager.CHANGE_COMPONENT, display.data);
 					return;
 				}
 

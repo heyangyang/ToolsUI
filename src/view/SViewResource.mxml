@@ -6,7 +6,8 @@
 		 height="100%"
 		 fontFamily="SimSun"
 		 addedToStage="init(event)"
-		 title="资源">
+		 title="资源"
+		 xmlns:component="view.component.*">
 	<fx:Metadata>
 		[Event(name="showComponetEvent" , type="flash.events.Event")]
 	</fx:Metadata>
@@ -18,65 +19,38 @@
 			import mx.managers.DragManager;
 
 			import spark.components.Image;
-			import spark.components.RadioButton;
-			import spark.components.VGroup;
-			import spark.events.TextOperationEvent;
 
 			import core.Config;
 			import core.SEvent;
 
-			import manager.EventManager;
-			import manager.LocalShareManager;
+			import manager.SEventManager;
 
 			import view.component.CSprite;
 
 
-			private var data : Object;
+			private var mData : XML;
 
 			protected function init(event : Event) : void
 			{
-				var canvas : VGroup = new VGroup();
-				canvas.addElement(m_group);
-				controlBarContent = [canvas];
-				controlBarVisible = true;
-				var type : String = LocalShareManager.get("res_type");
-				if (type)
-				{
-					var radio : RadioButton;
-					for (var i : int = 1; i <= 8; i++)
-					{
-						radio = this["r" + i];
-						if (radio.label == type)
-							radio.selected = true;
-					}
-				}
-				EventManager.addListener(EventManager.EVENT_RES_COMPLETE, onComplete);
+				searchText.setExcuteHanlder(filterTree);
+				SEventManager.addListener(SEventManager.EVENT_RES_COMPLETE, onComplete);
 			}
 
 			private function onComplete(evt : SEvent) : void
 			{
-				this.data = evt.data;
-				if (data == null)
+				mData = evt.data as XML;
+				if (mData == null)
 				{
 					resourceTree.dataProvider = null;
 					return;
 				}
-				updateRadio();
+				filterTree();
 			}
 
-			private function updateRadio() : void
-			{
-				var radio : RadioButton;
-				for (var i : int = 1; i <= 8; i++)
-				{
-					radio = this["r" + i];
-					if (radio.selected)
-						filterTreeByType(radio.label);
-				}
-			}
 
 			protected function resourceTree_itemClickHandler(event : ListEvent) : void
 			{
+				var cc : Object = resourceTree.selectedItem;
 				var type : String = resourceTree.selectedItem.@type;
 				if (!type)
 				{
@@ -86,32 +60,24 @@
 				resourceTree.setFocus();
 				Clipboard.generalClipboard.clear();
 				Clipboard.generalClipboard.setData(ClipboardFormats.TEXT_FORMAT, resourceTree.selectedItem.@label);
-				EventManager.dispatch(EventManager.SHOW_COMPONENT, resourceTree.selectedItem);
+				SEventManager.dispatch(SEventManager.SHOW_COMPONENT, resourceTree.selectedItem);
 			}
 
-			protected function searchText_changeHandler(event : TextOperationEvent) : void
+			private function filterTree(keyWords : String = null) : void
 			{
-				if (data == null)
+				if (mData == null)
 					return;
-				var keyWords : String = searchText.text.toLocaleLowerCase();
-				filterTree(keyWords);
-			}
 
-			private function filterTree(keyWords : String) : void
-			{
-				if (keyWords == "")
+				if (!keyWords)
 				{
-					updateRadio();
-					return;
+					resourceTree.dataProvider = mData;
+					return
 				}
-
 				var fileXml : XML = <root label="root"/>;
-				parseXml(data.t1);
-				if (fileXml.node.length() > 0)
-					resourceTree.dataProvider = fileXml;
-				else
-					resourceTree.dataProvider = null;
-				function parseXml(tmp_xml : XML) : void
+				parseXmlByKeyWords(mData);
+				resourceTree.dataProvider = fileXml.node.length() > 0 ? fileXml : null;
+
+				function parseXmlByKeyWords(tmp_xml : XML) : void
 				{
 					var xmlList : XMLList = tmp_xml.children();
 					for each (var tmp : XML in xmlList)
@@ -119,53 +85,18 @@
 						if (tmp.children().length() == 0)
 						{
 							var key : String = tmp.@label.toLocaleLowerCase();
-							if (key.indexOf(keyWords) >= 0)
+							if (!keyWords || key.indexOf(keyWords) >= 0)
 								fileXml.appendChild(tmp);
 						}
 						else
-							parseXml(tmp);
+							parseXmlByKeyWords(tmp);
 					}
 				}
 			}
 
-			protected function r1_clickHandler(evt : MouseEvent) : void
-			{
-				searchText.text = "";
-				filterTreeByType(evt.target["label"]);
-				LocalShareManager.save("res_type", evt.target["label"]);
-			}
-
-			private function filterTreeByType(type : String) : void
-			{
-				if (data == null)
-					return;
-				var fileXml : XML = <root label="root"/>;
-				searchText.text = "";
-				switch (type)
-				{
-					case "分类":
-						fileXml = data.t1;
-						break;
-					case "整合":
-						fileXml = data.t2;
-						break;
-					default:
-						var tmp_data : Object = data.t2.node;
-						for each (var data : XML in tmp_data)
-						{
-							if (data.@id != type)
-								continue;
-							for each (var xml : XML in data.node)
-								fileXml.appendChild(xml);
-						}
-						break;
-				}
-				resourceTree.dataProvider = fileXml.node.length() > 0 ? fileXml : null;
-			}
-
 			protected function resourceTree_dragCompleteHandler(evt : DragEvent) : void
 			{
-				EventManager.dispatch("drag_over");
+				SEventManager.dispatch("drag_over");
 			}
 
 			protected function resourceTree_dragStartHandler(evt : DragEvent) : void
@@ -187,7 +118,7 @@
 					imgProxy.source = bmd;
 					var source : DragSource = new DragSource();
 					source.addData(resourceTree.selectedItem, "res");
-					DragManager.doDrag(evt.dragInitiator, source, evt, imgProxy, resourceTree.mouseX, resourceTree.mouseY);
+					DragManager.doDrag(evt.dragInitiator, source, evt, imgProxy, resourceTree.mouseX - bmd.width * .5, resourceTree.mouseY - bmd.height * .5, 1);
 				}
 
 				evt.preventDefault();
@@ -197,24 +128,13 @@
 	<fx:Declarations>
 		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
 	</fx:Declarations>
-
+	<!--资源过滤-->
+	<component:SearchInput id="searchText"
+						   y="-26"
+						   x="50"
+						   width="80%"/>
 	<s:VGroup width="100%"
-			  height="100%"
-			  paddingTop="6">
-		<!--资源过滤-->
-		<mx:HBox width="100%"
-				 height="35"
-				 borderColor="0x000000"
-				 borderStyle="solid"
-				 paddingTop="5">
-			<s:Label text="过滤:"
-					 height="100%"
-					 fontSize="16"
-					 paddingTop="4"/>
-			<s:TextInput width="85%"
-						 id="searchText"
-						 change="searchText_changeHandler(event)"/>
-		</mx:HBox>
+			  height="100%">
 		<!--资源列表-->
 		<mx:Tree id="resourceTree"
 				 width="100%"
@@ -224,43 +144,6 @@
 				 dragComplete="resourceTree_dragCompleteHandler(event)"
 				 labelField="@label"
 				 showRoot="false"
-				 change="resourceTree_itemClickHandler(event)"
 				 itemClick="resourceTree_itemClickHandler(event)"/>
-		<s:VGroup id="m_group"
-				  width="100%"
-				  height="100%"
-				  paddingLeft="10">
-			<s:HGroup width="100%"
-					  height="100%">
-				<s:RadioButton id="r1"
-							   label="分类"
-							   click="r1_clickHandler(event)"
-							   selected="true"/>
-				<s:RadioButton id="r2"
-							   click="r1_clickHandler(event)"
-							   label="整合"/>
-				<s:RadioButton id="r3"
-							   click="r1_clickHandler(event)"
-							   label="btn"/>
-				<s:RadioButton id="r4"
-							   click="r1_clickHandler(event)"
-							   label="mc"/>
-			</s:HGroup>
-			<s:HGroup width="100%"
-					  height="100%">
-				<s:RadioButton id="r5"
-							   click="r1_clickHandler(event)"
-							   label="img"/>
-				<s:RadioButton id="r6"
-							   click="r1_clickHandler(event)"
-							   label="s9"/>
-				<s:RadioButton id="r7"
-							   click="r1_clickHandler(event)"
-							   label="spr"/>
-				<s:RadioButton id="r8"
-							   click="r1_clickHandler(event)"
-							   label="otr"/>
-			</s:HGroup>
-		</s:VGroup>
 	</s:VGroup>
 </s:Panel>

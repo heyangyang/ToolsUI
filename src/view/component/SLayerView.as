@@ -6,7 +6,7 @@ package view.component
 	import core.data.SLayerData;
 	import core.data.SViewBase;
 
-	import manager.EventManager;
+	import manager.SEventManager;
 
 	/**
 	 * 图层管理
@@ -229,7 +229,7 @@ package view.component
 
 		public function notifyUpdate() : void
 		{
-			setTimeout(EventManager.dispatch, 0, EventManager.UPDATE_LAYER);
+			setTimeout(SEventManager.dispatch, 0, SEventManager.UPDATE_LAYER);
 		}
 
 		private static var instance : SLayerView;

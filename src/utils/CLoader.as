@@ -6,12 +6,12 @@ package utils
 	import flash.system.ApplicationDomain;
 	import flash.system.LoaderContext;
 	import flash.utils.ByteArray;
-	
+
 	import mx.controls.Alert;
-	
+
 	import core.Config;
-	
-	import manager.EventManager;
+
+	import manager.SEventManager;
 	import manager.LocalShareManager;
 
 	public class CLoader
@@ -65,8 +65,8 @@ package utils
 
 			function onSelect(evt : Event) : void
 			{
-				Config.saveProjectData("", "",  file.nativePath);
-				EventManager.dispatch(EventManager.SHOW_VIEW);
+				Config.saveProjectData("", "", file.nativePath, "");
+				SEventManager.dispatch(SEventManager.SHOW_VIEW);
 			}
 		}
 

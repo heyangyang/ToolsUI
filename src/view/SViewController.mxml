@@ -25,7 +25,7 @@
 			import core.data.SViewBase;
 
 			import manager.ComponentManager;
-			import manager.EventManager;
+			import manager.SEventManager;
 			import manager.HistoryManager;
 
 			import view.component.SLayerView;
@@ -62,7 +62,7 @@
 				selectData = ComponentManager.Ins();
 				txt_code.visible = false;
 				combox.dataProvider = new ArrayCollection(SACLE_ARRAY);
-				combox.visible = false;
+				tabBar.visible = combox.visible = false;
 				layer = SLayerView.getInstance();
 				ui = new UIComponent();
 				ui.addChild(drag_canvas);
@@ -82,9 +82,9 @@
 				canvas.addEventListener(MouseEvent.MOUSE_UP, onStageUp);
 				addEventListener(MouseEvent.ROLL_OVER, onRollOver);
 				addEventListener(MouseEvent.ROLL_OUT, onRollOut);
-				EventManager.addListener(EventManager.SHOW_VIEW, onShowViewHandler, false, 1);
-				EventManager.addListener(EventManager.EVENT_RES_COMPLETE, initView);
-				EventManager.addListener(EventManager.CHANGE_COMPONENT, onChangeComponent);
+				SEventManager.addListener(SEventManager.SHOW_VIEW, onShowViewHandler, false, 1);
+				SEventManager.addListener(SEventManager.EVENT_RES_COMPLETE, initView);
+				SEventManager.addListener(SEventManager.CHANGE_COMPONENT, onChangeComponent);
 				addEventListener(NativeDragEvent.NATIVE_DRAG_ENTER, onDragInHandler);
 				addEventListener(NativeDragEvent.NATIVE_DRAG_DROP, onDropHandler);
 				addEventListener(Event.ENTER_FRAME, onUpdate);
@@ -571,7 +571,7 @@
 				{
 					selectData.isChange = false;
 					selectData.selectedTarget(true);
-					EventManager.dispatch(EventManager.UPDATE_FIELD, selectData.list)
+					SEventManager.dispatch(SEventManager.UPDATE_FIELD, selectData.list)
 				}
 			}
 

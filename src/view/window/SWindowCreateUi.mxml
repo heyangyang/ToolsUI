@@ -14,7 +14,7 @@
 			import core.Config;
 			import core.data.SUiObject;
 
-			import manager.EventManager;
+			import manager.SEventManager;
 			private var validatorArr : Array;
 
 			protected override function init() : void
@@ -59,7 +59,8 @@
 				//设置当前ui
 				Config.setCurrentUI(uiObject);
 				//保存
-				EventManager.dispatch(EventManager.SAVE_VIEW, uiObject);
+				SEventManager.dispatch(SEventManager.SAVE_VIEW, uiObject);
+				SEventManager.dispatch(SEventManager.SHOW_VIEW_TREE);
 				onCloseHandler();
 			}
 		]]>

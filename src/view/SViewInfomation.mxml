@@ -5,20 +5,21 @@
 		   creationComplete="init(event)"
 		   backgroundColor="0x666666"
 		   fontFamily="SimSun"
-		   xmlns:view="view.*">
+		   xmlns:view="view.*"
+		   xmlns:component="view.component.*">
 	<fx:Script>
 		<![CDATA[
 			import mx.events.FlexEvent;
 			import mx.events.ListEvent;
-			
+
 			import core.Config;
 			import core.SEvent;
 			import core.data.SUiObject;
-			
-			import manager.EventManager;
-			
+
+			import manager.SEventManager;
+
 			import utils.FilesUtil;
-			
+
 			import view.component.CLoading;
 
 			[Bindable]
@@ -26,14 +27,16 @@
 			[Bindable]
 			private var mFileXml : XML;
 			private var previewContainer : Sprite;
+			private var fileterText : String;
 
 			protected function init(event : FlexEvent) : void
 			{
 				previewContainer = new Sprite();
 				uiPreview.addChild(previewContainer);
-				EventManager.addListener(EventManager.SHOW_VIEW_TREE, onShowViewHanlder);
-				EventManager.addListener(EventManager.SHOW_COMPONENT, onShowComponentHanlder);
-				EventManager.addListener(EventManager.EVENT_RES_COMPLETE, onComplete);
+				SEventManager.addListener(SEventManager.SHOW_VIEW_TREE, onShowViewHanlder);
+				SEventManager.addListener(SEventManager.SHOW_COMPONENT, onShowComponentHanlder);
+				SEventManager.addListener(SEventManager.EVENT_RES_COMPLETE, onComplete);
+				search.setExcuteHanlder(searchHanlder);
 			}
 
 			private function onComplete(evt : SEvent) : void
@@ -42,9 +45,21 @@
 					previewContainer.removeChildAt(0);
 			}
 
-			private function onShowViewHanlder(evt : Event) : void
+			/**
+			 * 搜索ui
+			 */
+			private function searchHanlder(text : String) : void
 			{
-				tree_panel.title = "项目 : " + Config.projectName;
+				fileterText = text;
+				onShowViewHanlder();
+			}
+
+			/**
+			 * 更新UI列表
+			 */
+			private function onShowViewHanlder(evt : Event = null) : void
+			{
+				tree_panel.title = "项目: " + Config.projectName.split(".")[0];
 				var rootFile : File = new File(Config.projectUrl);
 				if (!rootFile.exists)
 				{
@@ -72,10 +87,12 @@
 						tFile = list[i];
 						if (tFile.isDirectory)
 						{
-							createTreeItems(tFile, tXml, false);
+							createTreeItems(tFile, tXml, fileterText ? true : false);
 							continue;
 						}
 						if (tFile.extension != Config.VIEW_EXTENSION.substring(1))
+							continue;
+						if (fileterText && tFile.name.indexOf(fileterText) == -1)
 							continue;
 						tXml.appendChild(<node label={tFile.name} nativePath={tFile.nativePath}/>);
 						tCount++;
@@ -85,7 +102,9 @@
 				}
 			}
 
-
+			/**
+			 * tree点击处理
+			 */
 			private function onItemClickHanlder(evt : ListEvent) : void
 			{
 				var open_url : String = evt.itemRenderer.data.@label;
@@ -111,6 +130,9 @@
 				Config.setCurrentUI(SUiObject.parseByteArray(bytes));
 			}
 
+			/**
+			 * 显示预览组件
+			 */
 			private function onShowComponentHanlder(evt : SEvent) : void
 			{
 				while (previewContainer.numChildren > 0)
@@ -120,19 +142,10 @@
 				var child : DisplayObject = Config.createComponetByName(name);
 				previewContainer.addChild(child);
 				var scale : Number = 1;
+
 				if (child.width > uiPreview.width)
 					scale = uiPreview.width / child.width;
-				else if (child.height > uiPreview.height)
-					scale = uiPreview.height / child.height;
-				else
-				{
-					scale = uiPreview.height / child.height;
-					if (child.width * scale > uiPreview.width)
-						scale = uiPreview.width / (child.width * scale);
-					else if (child.height * scale > uiPreview.height)
-						scale = uiPreview.height / (child.height * scale);
-				}
-
+				//如果有原件x，y小于0，则计算出小于0的
 				var childx : int = 0, childy : int = 0;
 				var container : DisplayObjectContainer = child as DisplayObjectContainer;
 				if (container)
@@ -172,6 +185,10 @@
 					 selectionColor="0xffff00"
 					 showRoot="false"
 					 itemClick="onItemClickHanlder(event)"/>
+			<component:SearchInput id="search"
+								   x="100"
+								   y="-26"
+								   width="60%"/>
 		</s:Panel>
 		<!--显示对象-->
 		<s:Panel title="显示"

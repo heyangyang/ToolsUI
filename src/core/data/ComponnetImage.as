@@ -1,6 +1,6 @@
 package core.data
 {
-	import manager.EventManager;
+	import manager.SEventManager;
 
 	public class ComponnetImage extends SViewBase
 	{
@@ -17,7 +17,7 @@ package core.data
 			if (button)
 			{
 				type = "btn";
-				EventManager.dispatch(EventManager.CHANGE_COMPONENT, this);
+				SEventManager.dispatch(SEventManager.CHANGE_COMPONENT, this);
 			}
 		}
 	}

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx">
+	<fx:Script>
+		<![CDATA[
+			import flash.utils.clearTimeout;
+			import flash.utils.setTimeout;
+
+			import spark.events.TextOperationEvent;
+
+			private var mSearchHanlder : Function;
+			private var mTimerId : int;
+			private var mSearchDelay : int = 300;
+
+			public function setExcuteHanlder(fun : Function) : void
+			{
+				mSearchHanlder = fun;
+			}
+
+			protected function filterChangeHandler(event : TextOperationEvent) : void
+			{
+				mTimerId > 0 && clearTimeout(mTimerId);
+				mTimerId = setTimeout(mSearchHanlder, mSearchDelay, input.text);
+			}
+
+			public function set searchDelay(value : int) : void
+			{
+				mSearchDelay = value;
+			}
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<!-- 将非可视元素（例如服务、值对象）放在此处 -->
+	</fx:Declarations>
+	<s:TextInput id="input"
+				 width="100%"
+				 paddingLeft="25"
+				 color="0xffffff"
+				 borderColor="0x0000aa"
+				 contentBackgroundColor="0x999999"
+				 change="filterChangeHandler(event)"/>
+	<s:Image id="icon_search"
+			 x="5"
+			 y="3"
+			 source="@Embed('../../../config/icon/search.png')"/>
+</s:Group>

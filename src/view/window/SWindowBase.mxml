@@ -12,7 +12,7 @@
 			
 			import core.Config;
 			
-			import manager.EventManager;
+			import manager.SEventManager;
 
 			private static var sCurWindow : SWindowBase;
 
@@ -20,8 +20,8 @@
 			{
 				sCurWindow && sCurWindow.onCloseHandler();
 				sCurWindow = this;
-				EventManager.addListener(Event.RESIZE, onResizeHandler);
-				EventManager.addListener(EventManager.EXIT_WINODW, onCloseHandler);
+				SEventManager.addListener(Event.RESIZE, onResizeHandler);
+				SEventManager.addListener(SEventManager.EXIT_WINODW, onCloseHandler);
 				onResizeHandler(null);
 				init();
 			}

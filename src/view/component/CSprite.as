@@ -7,7 +7,7 @@ package view.component
 	import flash.display.MovieClip;
 	import flash.display.Sprite;
 	
-	import manager.EventManager;
+	import manager.SEventManager;
 	import core.data.SViewBase;
 
 	public class CSprite extends Sprite
@@ -63,7 +63,7 @@ package view.component
 		
 		public function dispatch(evt : String, data : Object = null) : void
 		{
-			EventManager.dispatch(evt, data);
+			SEventManager.dispatch(evt, data);
 		}
 	}
 }

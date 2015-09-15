@@ -8,7 +8,6 @@ package manager
 	import flash.net.FileFilter;
 	import flash.utils.ByteArray;
 
-	import mx.controls.Alert;
 	import mx.managers.PopUpManager;
 
 	import core.CodeUtils;
@@ -23,9 +22,10 @@ package manager
 	import view.component.CLoading;
 	import view.window.SWindowCreateProject;
 	import view.window.SWindowCreateUi;
+	import view.window.SWindowEditProject;
 	import view.window.SWindowSetting;
 
-	public class EventManager extends EventDispatcher
+	public class SEventManager extends EventDispatcher
 	{
 		/**
 		 * 创建项目
@@ -35,6 +35,10 @@ package manager
 		 * 导入项目
 		 */
 		public static const IMPORT_PROJECT : String = "IMPORT_PROJECT";
+		/**
+		 * 编辑属性
+		 */
+		public static const EDIT_PROJECT : String = "EDIT_PROJECT";
 		/**
 		 * 创建ui
 		 */
@@ -90,17 +94,17 @@ package manager
 		 */
 		public static const EXIT_WINODW : String = "exit_window";
 
-		private static var instance : EventManager;
+		private static var instance : SEventManager;
 
-		public function EventManager(target : IEventDispatcher = null)
+		public function SEventManager(target : IEventDispatcher = null)
 		{
 			super(target);
 		}
 
-		public static function getInstance() : EventManager
+		public static function getInstance() : SEventManager
 		{
 			if (instance == null)
-				instance = new EventManager();
+				instance = new SEventManager();
 			return instance;
 		}
 
@@ -110,6 +114,7 @@ package manager
 		{
 			mCurrent = Config.current;
 			addListener(CREATE_PROJECT, onCreateProtect);
+			addListener(EDIT_PROJECT, onEditProtect);
 			addListener(IMPORT_PROJECT, onImportProtect);
 			addListener(CREATE_VIEW, onCreateView);
 			addListener(IMPORT_RES, onImprotRes);
@@ -117,6 +122,7 @@ package manager
 			addListener(SETTING_VIEW, onSettingView);
 
 			addListener(SHOW_VIEW, onStartLoaderResSwf);
+			addListener(CREATE_CODE, onCreateViewCodeHanlder);
 			addListener(CREATE_ALL_CODE, onCreateViewCodeHanlder);
 		}
 
@@ -128,6 +134,7 @@ package manager
 		private function onCreateViewCodeHanlder(evt : SEvent) : void
 		{
 			CLoading.getInstance().show();
+			//是否批量生成
 			var isBath : Boolean = Boolean(evt.data);
 			var saveFile : File = new File();
 			if (isBath)
@@ -216,6 +223,16 @@ package manager
 		}
 
 		/**
+		 * 编辑项目
+		 * @param evt
+		 *
+		 */
+		private function onEditProtect(evt : Event) : void
+		{
+			PopUpManager.createPopUp(Config.layer, SWindowEditProject, true);
+		}
+
+		/**
 		 * 导入项目
 		 * @param evt
 		 *
@@ -249,8 +266,7 @@ package manager
 
 		private var loadIndex : int;
 		private var loadCount : int;
-		private var fileXml : XML;
-		public var all_xml : XML;
+		private var mAllXml : XML;
 
 		/**
 		 * 导入资源
@@ -268,9 +284,7 @@ package manager
 			mCurrent.resourceList.length = 0;
 			var swfFile : File = new File();
 			var txtFilter : FileFilter = new FileFilter("swf文件(.swf)", "*.swf");
-			if (LocalShareManager.get("swf"))
-				swfFile.nativePath = LocalShareManager.get("swf");
-
+			swfFile.nativePath = Config.projectResourceUrl;
 			swfFile.browseForOpenMultiple("选择要导入的文件", [txtFilter]);
 			swfFile.addEventListener(FileListEvent.SELECT_MULTIPLE, swfFileSelectedHandler);
 
@@ -284,42 +298,32 @@ package manager
 
 		public function onStartLoaderResSwf(evt : Event = null) : void
 		{
-			var xml : XML;
 			var bytes : ByteArray;
 			var nativePath : String, name : String;
 			loadIndex = 0;
 			loadCount = mCurrent.resourceList.length;
-			//分类
-			fileXml = <root label="root"/>;
-			//整合
-			all_xml = <root label="root"/>;
+			mAllXml = <root label="root"/>;
 
 			if (loadCount == 0)
-			{
-				CLoading.getInstance().hide();
-				dispatch(EventManager.EVENT_RES_COMPLETE);
-			}
+				CLoading.getInstance().hide(onSwfComplete);
 
 			for (var i : int = 0; i < loadCount; i++)
 			{
 				name = mCurrent.resourceList[i].split(".").shift();
 				nativePath = Config.projectResourceUrl + mCurrent.resourceList[i];
-				xml = <swf label={name}/>;
-				fileXml.appendChild(xml);
-				LocalShareManager.save("swf", nativePath);
-				new CLoader(nativePath, onResComplete, name, xml);
+				new CLoader(nativePath, onResComplete, name);
 			}
 		}
 
 
-		private function onResComplete(bytes : ByteArray, name : String, xml : XML) : void
+		private function onResComplete(bytes : ByteArray, name : String) : void
 		{
 			loadIndex++;
-			parseSwf(bytes, name, xml);
+			parseSwf(bytes, name);
 		}
 
 
-		private function parseSwf(bytes : ByteArray, swfName : String, xml : XML) : void
+		private function parseSwf(bytes : ByteArray, swfName : String) : void
 		{
 			var classArray : Array = GetSwfAllClass.getSWFClassName(bytes);
 			var len : int = classArray.length;
@@ -329,44 +333,30 @@ package manager
 			for (var i : int = 0; i < len; i++)
 			{
 				name = classArray[i];
-				if (name.indexOf("btn_") == 0)
-					type = "btn";
-				else if (name.indexOf("img_") == 0)
-					type = "img";
-				else if (name.indexOf("mc_") == 0)
-					type = "mc";
-				else if (name.indexOf("s9_") == 0)
-					type = "s9";
-				else if (name.indexOf("spr_") == 0)
-					type = "spr";
+				if (name.indexOf("_") >= 0)
+					type = name.split("_")[0];
 				else
-					type = "otr";
+					type = Config.OTHER;
 
-				createXml(xml);
-				createXml(all_xml);
-				function createXml(tmp_xm : XML) : void
+				child_xml = mAllXml.node.(@id == type);
+				if (child_xml.length() == 0)
 				{
-					child_xml = tmp_xm.node.(@id == type);
-					if (child_xml.length() == 0)
-						tmp_xm.appendChild(<node id={type} label={type}/>);
-					child_xml = tmp_xm.node.(@id == type);
-					child_xml.appendChild(<node label={name} swf={swfName} type={type}/>);
+					mAllXml.appendChild(<node id={type} label={type}/>);
+					child_xml = mAllXml.node.(@id == type);
 				}
+				child_xml.appendChild(<node label={name} swf={swfName} type={type}/>)
 			}
+
+
 			if (loadIndex >= loadCount)
 			{
-				all_xml.appendChild(<node id="otr" label="otr"/>);
-				for each (xml in Config.getXmlByType("com"))
-				{
-					if (xml.@isOther == "true")
-						all_xml.node.(@id == "otr")[0].appendChild(<node label={xml.@label} swf="public" type={xml.@type}/>);
-				}
-				CLoading.getInstance().hide(complement);
-				function complement() : void
-				{
-					dispatch(EventManager.EVENT_RES_COMPLETE, {"t1": fileXml, "t2": all_xml});
-				}
+				CLoading.getInstance().hide(onSwfComplete);
 			}
+		}
+
+		private function onSwfComplete() : void
+		{
+			dispatch(SEventManager.EVENT_RES_COMPLETE, mAllXml);
 		}
 
 		/**

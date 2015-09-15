@@ -1,5 +1,7 @@
 package core
 {
+	import flash.display.Bitmap;
+	import flash.display.BitmapData;
 	import flash.display.Stage;
 	import flash.events.Event;
 	import flash.events.KeyboardEvent;
@@ -7,18 +9,18 @@ package core
 	import flash.system.ApplicationDomain;
 	import flash.ui.Keyboard;
 	import flash.utils.ByteArray;
-
+	
 	import mx.controls.Alert;
-
+	
 	import spark.components.WindowedApplication;
-
+	
 	import core.data.SUiObject;
-
-	import manager.EventManager;
+	
 	import manager.LocalShareManager;
-
+	import manager.SEventManager;
+	
 	import utils.FilesUtil;
-
+	
 	import view.component.CButton;
 	import view.component.CList;
 	import view.component.CSprite;
@@ -36,12 +38,15 @@ package core
 		 * ui后缀
 		 */
 		public static const VIEW_EXTENSION : String = ".ui";
+
+		public static const OTHER : String = "other";
 		private static var sStage : Stage;
 		public static var layer : WindowedApplication;
 		public static var appDomain : ApplicationDomain;
 		private static var sProjectName : String;
 		private static var sProjectUrl : String;
 		private static var sProjectResourceUrl : String;
+		private static var sProjectCodeUrl : String;
 		/**
 		 * 当前界面数据
 		 */
@@ -60,8 +65,7 @@ package core
 		public static function setCurrentUI(data : SUiObject) : void
 		{
 			sCurrent.clone(data);
-			EventManager.dispatch(EventManager.SHOW_VIEW_TREE);
-			EventManager.dispatch(EventManager.SHOW_VIEW);
+			SEventManager.dispatch(SEventManager.SHOW_VIEW);
 		}
 
 		private static var sRootXml : XML;
@@ -89,7 +93,7 @@ package core
 		private static function onKeyUpHandler(evt : KeyboardEvent) : void
 		{
 			if (evt.keyCode == Keyboard.ESCAPE)
-				dispatch(EventManager.EXIT_WINODW);
+				dispatch(SEventManager.EXIT_WINODW);
 		}
 
 		private static function onResizeHandler(evt : Event) : void
@@ -123,17 +127,19 @@ package core
 				if (PROJECT_EXTENSION.substring(1) != tFile.extension)
 					continue;
 				//读取文件
-				bytes = FilesUtil.getBytesFromeFile(tFile.nativePath);
+				bytes = FilesUtil.getBytesFromeFile(tFile.nativePath, true);
 				//获取名字
 				sProjectName = bytes.readUTF();
 				//获取项目地址
-				sProjectUrl = bytes.readUTF() + File.separator;
+				sProjectUrl = bytes.readUTF();
 				//获取资源路径
-				sProjectResourceUrl = bytes.readUTF() + File.separator;
+				sProjectResourceUrl = bytes.readUTF();
+				//获取保存地址
+				sProjectCodeUrl = bytes.readUTF();
 				//保存项目地址
 				LocalShareManager.save(LocalShareManager.PROJECT, sProjectUrl);
 				//派发显示事件					
-				dispatch(EventManager.SHOW_VIEW_TREE);
+				dispatch(SEventManager.SHOW_VIEW_TREE);
 				return;
 			}
 			alert("没有找到可用项目");
@@ -161,18 +167,20 @@ package core
 				else
 				{
 					var class_res : Class = Config.appDomain.getDefinition(res_name) as Class;
-					child = new CSprite(new class_res());
+					var data : * = new class_res();
+					if (data is BitmapData)
+						data = new Bitmap(data);
+					child = new CSprite(data);
 				}
 
 				if (res_name.indexOf("btn_") >= 0 || res_name.indexOf("img_") >= 0)
 				{
-					var btn : CButton = new CButton(child);
-					return btn;
+					return new CButton(child);
 				}
 			}
 			catch (e : Error)
 			{
-				alert("丢失资源:" + res_name);
+				error("丢失资源:" + res_name);
 				trace(e);
 				child = new CTextDisplay();
 				child.isLostRes = true;
@@ -192,19 +200,21 @@ package core
 
 		private static function dispatch(evt : String, obj : Object = null) : void
 		{
-			EventManager.dispatch(evt, obj);
+			SEventManager.dispatch(evt, obj);
 		}
 
-		public static function saveProjectData(projectName : String, projectUrl : String, projectResourceUrl : String) : void
+		public static function saveProjectData(projectName : String, projectUrl : String, projectResourceUrl : String, projectCodeUrl : String) : void
 		{
 			sProjectName = projectName + PROJECT_EXTENSION;
 			sProjectUrl = projectUrl + File.separator;
 			sProjectResourceUrl = projectResourceUrl + File.separator;
+			sProjectCodeUrl = projectCodeUrl + File.separator;
 			var byte : ByteArray = new ByteArray();
 			byte.writeUTF(sProjectName);
 			byte.writeUTF(sProjectUrl);
 			byte.writeUTF(sProjectResourceUrl);
-			FilesUtil.saveToFile(sProjectUrl + sProjectName, byte, true, false);
+			byte.writeUTF(sProjectCodeUrl);
+			FilesUtil.saveToFile(sProjectUrl + sProjectName, byte, true, true);
 			LocalShareManager.save(LocalShareManager.PROJECT, sProjectUrl);
 		}
 
@@ -244,6 +254,11 @@ package core
 		public static function get projectResourceUrl() : String
 		{
 			return sProjectResourceUrl;
+		}
+
+		public static function get projectCodeUrl() : String
+		{
+			return sProjectCodeUrl;
 		}
 	}
 }

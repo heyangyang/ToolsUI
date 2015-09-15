@@ -3,7 +3,7 @@
 					xmlns:s="library://ns.adobe.com/flex/spark"
 					xmlns:mx="library://ns.adobe.com/flex/mx"
 					width="450"
-					height="135"
+					height="155"
 					title="创建项目"
 					xmlns:window="view.window.*">
 	<fx:Script>
@@ -12,7 +12,7 @@
 
 			import core.Config;
 
-			import manager.EventManager;
+			import manager.SEventManager;
 			import manager.LocalShareManager;
 
 
@@ -54,6 +54,21 @@
 				}
 			}
 
+			protected function onChangeProjectCodeUrl(evt : Event) : void
+			{
+				var file : File = new File();
+				if (LocalShareManager.get("project_code"))
+					file.nativePath = LocalShareManager.get("project_code");
+				file.browseForDirectory("选择");
+				file.addEventListener(Event.SELECT, onSelect);
+
+				function onSelect(evt : Event) : void
+				{
+					txt_codeUrl.text = file.nativePath;
+					LocalShareManager.save("project_code", file.nativePath);
+				}
+			}
+
 			protected function onCreateProjectClick(evt : Event) : void
 			{
 				if (txt_name.text == "")
@@ -66,13 +81,18 @@
 					Config.alert("请选择资源目录!");
 					return;
 				}
+				if (txt_codeUrl.text == "")
+				{
+					Config.alert("请选择代码目录!");
+					return;
+				}
 				var file : File = new File(txt_url.text + File.separator + txt_name.text);
 				//目录不存在，则创建
 				!file.exists && file.createDirectory();
 				//保存项目数据
-				Config.saveProjectData(txt_name.text, file.nativePath, txt_resUrl.text);
+				Config.saveProjectData(txt_name.text, file.nativePath, txt_resUrl.text, txt_codeUrl.text);
 				//派发显示事件					
-				EventManager.dispatch(EventManager.SHOW_VIEW_TREE);
+				SEventManager.dispatch(SEventManager.SHOW_VIEW_TREE);
 				PopUpManager.removePopUp(this);
 			}
 		]]>
@@ -87,6 +107,7 @@
 			<s:TextInput width="300"
 						 id="txt_name"/>
 			<s:Button label="创建"
+					  id="btn_ok"
 					  color="0xffff00"
 					  click="onCreateProjectClick(event)"/>
 		</s:HGroup>
@@ -105,6 +126,14 @@
 						 id="txt_resUrl"/>
 			<s:Button label="浏览"
 					  click="onChangeProjectResourceUrl(event)"/>
+		</s:HGroup>
+		<s:HGroup>
+			<s:Label text="代码地址"/>
+			<s:TextInput editable="false"
+						 width="300"
+						 id="txt_codeUrl"/>
+			<s:Button label="浏览"
+					  click="onChangeProjectCodeUrl(event)"/>
 		</s:HGroup>
 	</s:VGroup>
 </window:SWindowBase>

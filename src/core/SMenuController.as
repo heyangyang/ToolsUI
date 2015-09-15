@@ -6,7 +6,7 @@ package core
 	import flash.events.Event;
 	import flash.ui.Keyboard;
 
-	import manager.EventManager;
+	import manager.SEventManager;
 
 
 	public class SMenuController
@@ -33,32 +33,33 @@ package core
 			subMenuList = [];
 			menuItem = {label: "项目(P)", subMenu: subMenuList};
 			menuList.push(menuItem);
-			subMenuList.push({label: "新建项目", data: EventManager.CREATE_PROJECT, key: [Keyboard.CONTROL], keybroad: "N"});
-			subMenuList.push({label: "导入项目", data: EventManager.IMPORT_PROJECT, key: [Keyboard.CONTROL], keybroad: "O"});
+			subMenuList.push({label: "新建项目", data: SEventManager.CREATE_PROJECT, key: [Keyboard.CONTROL], keybroad: "N"});
+			subMenuList.push({label: "导入项目", data: SEventManager.IMPORT_PROJECT, key: [Keyboard.CONTROL], keybroad: "O"});
+			subMenuList.push({label: "属性", data: SEventManager.EDIT_PROJECT});
 			//-------------------项目--------------------------
 
 			//-------------------操作--------------------------
 			subMenuList = [];
 			menuItem = {label: "操作(T)", subMenu: subMenuList};
 			menuList.push(menuItem);
-			subMenuList.push({label: "新建界面", data: EventManager.CREATE_VIEW, key: [Keyboard.CONTROL], keybroad: "n"});
-			subMenuList.push({label: "导入资源", data: EventManager.IMPORT_RES, key: [Keyboard.CONTROL], keybroad: "o"});
-			subMenuList.push({label: "保存", data: EventManager.SAVE_VIEW, key: [Keyboard.CONTROL], keybroad: "s"});
+			subMenuList.push({label: "新建界面", data: SEventManager.CREATE_VIEW, key: [Keyboard.CONTROL], keybroad: "n"});
+			subMenuList.push({label: "导入资源", data: SEventManager.IMPORT_RES, key: [Keyboard.CONTROL], keybroad: "o"});
+			subMenuList.push({label: "保存", data: SEventManager.SAVE_VIEW, key: [Keyboard.CONTROL], keybroad: "s", param: Config.current});
 			//-------------------操作--------------------------
 
 			//-------------------生成--------------------------
 			subMenuList = [];
 			menuItem = {label: "生成(S)", subMenu: subMenuList};
 			menuList.push(menuItem);
-			subMenuList.push({label: "生成代码", data: EventManager.CREATE_CODE});
-			subMenuList.push({label: "批量生成代码", data: EventManager.CREATE_ALL_CODE, param: true});
+			subMenuList.push({label: "生成代码", data: SEventManager.CREATE_CODE});
+			subMenuList.push({label: "批量生成代码", data: SEventManager.CREATE_ALL_CODE, param: true});
 			//-------------------生成--------------------------
 
 			//-------------------其他--------------------------
 			subMenuList = [];
 			menuItem = {label: "其他", subMenu: subMenuList};
 			menuList.push(menuItem);
-			subMenuList.push({label: "设置", data: EventManager.SETTING_VIEW});
+			subMenuList.push({label: "设置", data: SEventManager.SETTING_VIEW});
 			//-------------------其他--------------------------
 
 			var len : int = menuList.length;
@@ -98,7 +99,7 @@ package core
 
 		private static function dispatch(evt : String, obj : Object = null) : void
 		{
-			EventManager.dispatch(evt, obj);
+			SEventManager.dispatch(evt, obj);
 		}
 	}
 }

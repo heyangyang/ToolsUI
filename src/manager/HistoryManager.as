@@ -78,7 +78,7 @@ package manager
 				//外界需要处理函数
 				excute != null && excute(viewData, history_data.dis_index);
 			}
-			EventManager.dispatch(EventManager.UPDATE_HISTORY);
+			SEventManager.dispatch(SEventManager.UPDATE_HISTORY);
 		}
 
 		/**
@@ -116,7 +116,7 @@ package manager
 		private function addHistory(data : Array, type : int = CHANGE) : void
 		{
 			history_list.push({"type": type, "data": data});
-			EventManager.dispatch(EventManager.UPDATE_HISTORY);
+			SEventManager.dispatch(SEventManager.UPDATE_HISTORY);
 		}
 
 		/**
@@ -131,7 +131,7 @@ package manager
 			var index : int = history_list.indexOf(data);
 			if (index != -1)
 				history_list.splice(index, 1);
-			EventManager.dispatch(EventManager.UPDATE_HISTORY);
+			SEventManager.dispatch(SEventManager.UPDATE_HISTORY);
 		}
 	}
 }

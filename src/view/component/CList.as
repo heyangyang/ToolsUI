@@ -6,7 +6,7 @@ package view.component
 	import flash.utils.ByteArray;
 
 	import core.Config;
-	import manager.EventManager;
+	import manager.SEventManager;
 	import core.data.ComponnetList;
 	import core.data.SUiObject;
 
@@ -77,7 +77,7 @@ package view.component
 					data.width = render.width;
 					data.height = render.height;
 					updateMask();
-					dispatch(EventManager.UPDATE_FIELD, Vector.<CSprite>([mList]));
+					dispatch(SEventManager.UPDATE_FIELD, Vector.<CSprite>([mList]));
 				}
 				transformTool.draw();
 			}

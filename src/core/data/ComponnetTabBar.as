@@ -1,6 +1,6 @@
 package core.data
 {
-	import manager.EventManager;
+	import manager.SEventManager;
 	
 	import view.component.CTabBar;
 
@@ -73,8 +73,8 @@ package core.data
 			}
 			try
 			{
-				var xml : Object = EventManager.getInstance().all_xml.node.(@id == "img")[0].node.(@label == normal_res)[0];
-				swf = xml.@swf;
+//				var xml : Object = SEventManager.getInstance().all_xml.node.(@id == "img")[0].node.(@label == normal_res)[0];
+//				swf = xml.@swf;
 			}
 			catch (e : Error)
 			{

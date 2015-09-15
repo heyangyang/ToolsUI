@@ -13,7 +13,7 @@
 
 			import spark.components.VGroup;
 
-			import manager.EventManager;
+			import manager.SEventManager;
 			import core.SEvent;
 			import core.data.SLayerData;
 
@@ -27,7 +27,7 @@
 				group.addElement(m_group);
 				controlBarContent = [group];
 				controlBarVisible = true;
-				EventManager.addListener(EventManager.UPDATE_LAYER, onUpdate);
+				SEventManager.addListener(SEventManager.UPDATE_LAYER, onUpdate);
 			}
 
 			protected function onUpdate(evt : SEvent) : void

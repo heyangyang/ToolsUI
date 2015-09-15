@@ -13,7 +13,7 @@
 			import core.Config;
 			import core.data.SUiObject;
 
-			import manager.EventManager;
+			import manager.SEventManager;
 
 			import utils.FilesUtil;
 
@@ -59,8 +59,8 @@
 				data.className = txt_name.text;
 				data.packageName = txt_packName.text;
 				data.extendsName = comBox_extends.selectedItem.extends_name;
-				EventManager.dispatch(EventManager.SAVE_VIEW, data);
-				EventManager.dispatch(EventManager.SHOW_VIEW_TREE);
+				SEventManager.dispatch(SEventManager.SAVE_VIEW, data);
+				SEventManager.dispatch(SEventManager.SHOW_VIEW_TREE);
 				//如果目录空了，则删除目录
 				file = file.parent;
 				if (file && file.getDirectoryListing().length == 0)

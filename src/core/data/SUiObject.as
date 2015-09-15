@@ -3,9 +3,9 @@ package core.data
 	import flash.display.DisplayObject;
 	import flash.filesystem.File;
 	import flash.utils.ByteArray;
-	
+
 	import core.Config;
-	
+
 	import view.component.CSprite;
 
 	public class SUiObject
@@ -251,9 +251,9 @@ package core.data
 		public function get nativeUrl() : String
 		{
 			if (packageName)
-				return Config.projectUrl + File.separator + packageName + File.separator + className + Config.VIEW_EXTENSION;
+				return Config.projectUrl + packageName + File.separator + className + Config.VIEW_EXTENSION;
 			else
-				return Config.projectUrl + File.separator + className + Config.VIEW_EXTENSION;
+				return Config.projectUrl + className + Config.VIEW_EXTENSION;
 		}
 
 		public function clone(data : SUiObject) : void
@@ -352,7 +352,7 @@ package core.data
 		/**
 		 * 图层数据
 		 */
-		public function get LayerData():Array
+		public function get LayerData() : Array
 		{
 			return mLayerData;
 		}
