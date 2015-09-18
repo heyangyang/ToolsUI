@@ -5,9 +5,8 @@
 	<package pkgName="game.view.viewBase" />
 	<extends>
 		<field name="game.view.BaseView" type="base" />
-		<field name="feathers.controls.renderers.DefaultListItemRenderer" type="base" />
-		<field name="UIComponent.SwfDefaultListItemRenderer" type="base" />
 	</extends>
+	
 	<component pkgName="">
 		<field name="name" label="name" type="string" value="" />
 		<field name="x" label="x" type="string" value="" />
@@ -16,93 +15,9 @@
 		<field name="height" label="height" type="int" value="" />
 	</component>
 
-	<com pkgName="lzm.starling.swf.display.SwfButton" classType="SwfButton"
-		type="btn" fun="createUiByType" funParams="type,res,swf">
-		<field name="text" label="text" type="string" value="" />
-		<field name="fontSize" label="textField.fontSize" type="int"
-			value="12" />
-		<field name="fontColor" label="textField.color" type="string"
-			value="0xffffff" />
-		<field name="bold" label="textField.bold" type="bool" value="false" />
-		<field name="touchable" label="touchable" type="bool" value="true" />
+	<com pkgName="com.mage" classType="Image" type="img">
+		<field name="touchable" type="bool" value="false" />
 	</com>
-
-	<com pkgName="lzm.starling.swf.display.SwfMovieClip" classType="SwfMovieClip"
-		type="mc" fun="createUiByType" funParams="type,res,swf">
-		<field name="touchable" label="touchable" type="bool" value="true" />
-	</com>
-
-	<com pkgName="lzm.starling.swf.display.SwfSprite" classType="SwfSprite"
-		type="spr" fun="createUiByType" funParams="type,res,swf">
-		<field name="touchable" label="touchable" type="bool" value="true" />
-	</com>
-
-	<com pkgName="lzm.starling.swf.display.SwfImage" classType="SwfImage"
-		type="img" fun="createUiByType" funParams="type,res,swf">
-		<field name="touchable" label="touchable" type="bool" value="false" />
-		<field name="button" type="bool" value="false" />
-	</com>
-
-	<com pkgName="lzm.starling.swf.display.SwfScale9Image" classType="SwfScale9Image"
-		type="s9" fun="createUiByType" funParams="type,res,swf">
-		<field name="touchable" label="touchable" type="bool" value="false" />
-	</com>
-
-	<!--********* ********** -->
-
-	<!--*********自定义类型*********** -->
-	<com pkgName="starling.text.TextField" classType="TextField"
-		isOther="true" label="TextField" type="txt" fun="createUiByType"
-		funParams="type,res,swf">
-		<field name="text" label="text" type="string" value="" />
-		<field name="fontSize" label="fontSize" type="int" value="12" />
-		<field name="fontColor" label="color" type="string" value="0xffffff" />
-		<field name="align" label="hAlign" type="comboBox" value="center"
-			groups="left,center,right" />
-		<field name="bold" label="bold" type="bool" value="false" />
-		<field name="touchable" label="touchable" type="bool" value="false" />
-	</com>
-
-	<com pkgName="feathers.controls.TextInput" classType="TextInput"
-		type="input" fun="createUiByType" isChange="true"  funParams="type,res,swf,textfield">
-		<field name="text" label="text" type="string" value="" />
-		<field name="fontSize" label="fontSize" type="int" value="12" />
-		<field name="fontColor" label="color" type="string" value="0xffffff" />
-		<field name="align" label="hAlign" type="comboBox" value="center"
-			groups="left,center,right" />
-		<field name="bold" label="bold" type="bool" value="false" />
-	</com>
-
-	<com pkgName="UIComponent.CheckBox" classType="CheckBox" type="check"
-		fun="createUiByType" isChange="true" funParams="type,res,swf,swfmovieclip">
-	</com>
-
-	<com pkgName="feathers.controls.List" classType="List" type="list"
-		isOther="true" label="List" fun="createListByType" funParams="render,layout,vGap,hGap">
-		<field name="layout" type="comboBox" value="row" groups="row,col" />
-		<field name="render" typeValue="swfdefaultlistitemrenderer" type="comboBox" value=""/>
-		<field name="vGap" type="int" value="" />
-		<field name="hGap" type="int" value="" />
-	</com>
-
-	<com pkgName="game.view.BaseView" classType="BaseView" type="view"
-		isOther="true" label="View" fun="createViewByType" funParams="view">
-		<field name="view" typeValue="baseview" type="comboBox" value=""/>
-	</com>
-	
-	<com pkgName="feathers.controls.TabBar" classType="TabBar" isOther="true"
-		label="TabBar" type="tab" fun="createTabBar"
-		funParams="normal_res,select_res,swf,labelNames,gap,align,fontSize,fontColor,bold">
-		<field name="normal_res" type="string" value="" />
-		<field name="select_res" type="string" value="" />
-		<field name="labelNames" type="string" value="" />
-		<field name="gap" type="int" value="" />
-		<field name="align" type="comboBox" value="row" groups="row,col" />
-		<field name="fontSize" type="int" value="12" />
-		<field name="fontColor" type="string" value="0xffffff" />
-		<field name="bold" type="bool" value="false" />
-	</com>
-	<!--********* ********** -->
 
 
 
@@ -112,8 +27,4 @@
 	</miss>
 	<!--********* ********** -->
 
-	<selectAll>
-		<field name="x" label="x" type="string" value="" />
-		<field name="y" label="y" type="string" value="" />
-	</selectAll>
 </root>
