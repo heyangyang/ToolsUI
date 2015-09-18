@@ -10,16 +10,15 @@ package manager
 
 	import mx.managers.PopUpManager;
 
-	import core.CodeUtils;
 	import core.Config;
 	import core.SEvent;
-	import core.data.SUiObject;
+	import core.SUi;
 
 	import utils.CLoader;
 	import utils.FilesUtil;
 	import utils.GetSwfAllClass;
 
-	import view.component.CLoading;
+	import view.component.SLoading;
 	import view.window.SWindowCreateProject;
 	import view.window.SWindowCreateUi;
 	import view.window.SWindowEditProject;
@@ -88,7 +87,7 @@ package manager
 		/**
 		 * 更新图层
 		 */
-		public static const UPDATE_LAYER : String = "update_layer";
+		public static const UPDATE_VIEW : String = "UPDATE_VIEW";
 		/**
 		 * 退出程序
 		 */
@@ -108,7 +107,7 @@ package manager
 			return instance;
 		}
 
-		private var mCurrent : SUiObject;
+		private var mCurrent : SUi;
 
 		public function init() : void
 		{
@@ -133,7 +132,7 @@ package manager
 		 */
 		private function onCreateViewCodeHanlder(evt : SEvent) : void
 		{
-			CLoading.getInstance().show();
+			SLoading.getInstance().show();
 			//是否批量生成
 			var isBath : Boolean = Boolean(evt.data);
 			var saveFile : File = new File();
@@ -168,23 +167,23 @@ package manager
 				else
 					saveCode(mCurrent);
 				saveFile.openWithDefaultApplication();
-				CLoading.getInstance().hide();
+				SLoading.getInstance().hide();
 				LocalShareManager.save("save_code", saveFile.nativePath);
 				//dispatch(SAVE_VIEW);
 			}
 
 			function onExit(evt : Event) : void
 			{
-				CLoading.getInstance().hide();
+				SLoading.getInstance().hide();
 			}
 
-			function saveCode(data : SUiObject) : void
+			function saveCode(data : SUi) : void
 			{
-				var code : String = CodeUtils.getAsCode(data);
+				//var code : String = CodeUtils.getAsCode(data);
 				var saveDirectory : String = saveFile.nativePath + "\\" + String(data.extendsName.split(".").pop()).toLocaleLowerCase();
 				var file : File = new File(saveDirectory);
 				!file.exists && file.createDirectory();
-				FilesUtil.saveUTFBytesToFile(saveDirectory + "\\" + data.className + ".as", code);
+//				FilesUtil.saveUTFBytesToFile(saveDirectory + "\\" + data.className + ".as", code);
 			}
 
 			function seachDirectoryList(url : String) : void
@@ -194,7 +193,7 @@ package manager
 				var len : int = file_list.length;
 				var tmp_file : File;
 				var bytes : ByteArray;
-				var viewData : SUiObject;
+				var viewData : SUi;
 				for (var i : int = 0; i < len; i++)
 				{
 					tmp_file = file_list[i];
@@ -280,8 +279,6 @@ package manager
 				Config.alert("请先创建UI!");
 				return;
 			}
-			//清除资源列表
-			mCurrent.resourceList.length = 0;
 			var swfFile : File = new File();
 			var txtFilter : FileFilter = new FileFilter("swf文件(.swf)", "*.swf");
 			swfFile.nativePath = Config.projectResourceUrl;
@@ -290,27 +287,33 @@ package manager
 
 			function swfFileSelectedHandler(evt : FileListEvent) : void
 			{
+				var tmpList : Array = []
 				for each (var tmp_swfFile : File in evt.files)
-					mCurrent.resourceList.push(tmp_swfFile.name);
+					tmpList.push(tmp_swfFile.name);
+				mCurrent.setResource(tmpList);
 				onStartLoaderResSwf();
 			}
 		}
 
 		public function onStartLoaderResSwf(evt : Event = null) : void
 		{
-			var bytes : ByteArray;
 			var nativePath : String, name : String;
+			var resourceList : Array = mCurrent.getResource();
+			loadCount = resourceList ? resourceList.length : 0;
 			loadIndex = 0;
-			loadCount = mCurrent.resourceList.length;
-			mAllXml = <root label="root"/>;
 
 			if (loadCount == 0)
-				CLoading.getInstance().hide(onSwfComplete);
+			{
+				SLoading.getInstance().hide(onSwfComplete);
+				return;
+			}
 
+			mAllXml = <root/>;
+			
 			for (var i : int = 0; i < loadCount; i++)
 			{
-				name = mCurrent.resourceList[i].split(".").shift();
-				nativePath = Config.projectResourceUrl + mCurrent.resourceList[i];
+				name = resourceList[i].split(".").shift();
+				nativePath = Config.projectResourceUrl + resourceList[i];
 				new CLoader(nativePath, onResComplete, name);
 			}
 		}
@@ -349,9 +352,7 @@ package manager
 
 
 			if (loadIndex >= loadCount)
-			{
-				CLoading.getInstance().hide(onSwfComplete);
-			}
+				SLoading.getInstance().hide(onSwfComplete);
 		}
 
 		private function onSwfComplete() : void
@@ -366,7 +367,7 @@ package manager
 		 */
 		private function onSaveView(evt : SEvent) : void
 		{
-			var data : SUiObject = evt.data as SUiObject;
+			var data : SUi = evt.data as SUi;
 			if (!data || !data.className)
 			{
 				Config.alert("请先创建UI!");
@@ -377,7 +378,7 @@ package manager
 				Config.alert("保存成功!");
 			else
 				Config.alert("创建成功!");
-			FilesUtil.saveToFile(data.nativeUrl, SUiObject.toByteArray(data), true, true);
+			FilesUtil.saveToFile(data.nativeUrl, data.toByteArray(), true, true);
 		}
 
 		/**

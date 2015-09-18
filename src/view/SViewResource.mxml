@@ -25,8 +25,6 @@
 
 			import manager.SEventManager;
 
-			import view.component.CSprite;
-
 
 			private var mData : XML;
 
@@ -44,13 +42,13 @@
 					resourceTree.dataProvider = null;
 					return;
 				}
+				Config.current.view.loadResourceComplete();
 				filterTree();
 			}
 
 
 			protected function resourceTree_itemClickHandler(event : ListEvent) : void
 			{
-				var cc : Object = resourceTree.selectedItem;
 				var type : String = resourceTree.selectedItem.@type;
 				if (!type)
 				{
@@ -94,34 +92,24 @@
 				}
 			}
 
-			protected function resourceTree_dragCompleteHandler(evt : DragEvent) : void
-			{
-				SEventManager.dispatch("drag_over");
-			}
-
 			protected function resourceTree_dragStartHandler(evt : DragEvent) : void
 			{
-				if (resourceTree.selectedItem.@swf == "")
-					evt.preventDefault();
-				else
-				{
-					var name : String = resourceTree.selectedItem.@label;
-					var child : CSprite = Config.createComponetByName(name);
-					var imgProxy : Image = new Image();
-					if (child.width == 0 || child.height == 0)
-					{
-						Config.alert(name + "资源大小为0");
-						evt.preventDefault();
-						return;
-					}
-					var bmd : BitmapData = new BitmapData(child.width, child.height, false, 0xfffffff);
-					imgProxy.source = bmd;
-					var source : DragSource = new DragSource();
-					source.addData(resourceTree.selectedItem, "res");
-					DragManager.doDrag(evt.dragInitiator, source, evt, imgProxy, resourceTree.mouseX - bmd.width * .5, resourceTree.mouseY - bmd.height * .5, 1);
-				}
-
 				evt.preventDefault();
+				if (resourceTree.selectedItem.@swf.toString() == "")
+					return;
+				var name : String = resourceTree.selectedItem.@label;
+				var child : Sprite = Config.createDisplayByName(name);
+				var imgProxy : Image = new Image();
+				if (child.width == 0 || child.height == 0)
+				{
+					Config.alert(name + "资源大小为0");
+					return;
+				}
+				var bmd : BitmapData = new BitmapData(child.width, child.height, false, 0xffffff);
+				imgProxy.source = bmd;
+				var source : DragSource = new DragSource();
+				source.addData(resourceTree.selectedItem, "res");
+				DragManager.doDrag(resourceTree, source, evt, imgProxy, resourceTree.mouseX - bmd.width * .5, resourceTree.mouseY - bmd.height * .5, 1.0);
 			}
 		]]>
 	</fx:Script>
@@ -141,7 +129,6 @@
 				 height="100%"
 				 dragEnabled="true"
 				 dragStart="resourceTree_dragStartHandler(event)"
-				 dragComplete="resourceTree_dragCompleteHandler(event)"
 				 labelField="@label"
 				 showRoot="false"
 				 itemClick="resourceTree_itemClickHandler(event)"/>

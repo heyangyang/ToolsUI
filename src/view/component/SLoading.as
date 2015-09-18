@@ -3,30 +3,33 @@ package view.component
 	import flash.display.Shape;
 	import flash.display.Sprite;
 	import flash.events.Event;
+	import flash.text.TextField;
+	import flash.text.TextFormat;
+	import flash.text.TextFormatAlign;
 	import flash.utils.getTimer;
 	import flash.utils.setTimeout;
 
 	import core.Config;
 
-	public class CLoading extends Sprite
+	public class SLoading extends Sprite
 	{
-		private static var instance : CLoading;
+		private static var instance : SLoading;
 
-		public static function getInstance() : CLoading
+		public static function getInstance() : SLoading
 		{
 			if (instance == null)
-				instance = new CLoading();
+				instance = new SLoading();
 			return instance;
 		}
 		private const COUNT : int = 3;
 		private const CLOSE_TIME : int = 600;
-		private var text : CTextDisplay;
+		private var text : TextField;
 		private var runTime : int;
 		private var delayTime : int;
 		private var index : int = 0;
 		private var mTxtArray : Array = [];
 
-		public function CLoading()
+		public function SLoading()
 		{
 			super();
 			addEventListener(Event.ADDED_TO_STAGE, onAddToStage);
@@ -40,10 +43,9 @@ package view.component
 			shape.graphics.drawRect(0, 0, stage.fullScreenWidth, stage.fullScreenHeight);
 			shape.graphics.endFill();
 			addChild(shape);
-			text = new CTextDisplay();
-			text.fontSize = 20;
+			text = new TextField();
 			text.width = 150;
-			text.align = "left";
+			text.defaultTextFormat = new TextFormat("SimSun", 20, 0xffffff, false, false, false, null, null, TextFormatAlign.LEFT);
 			text.x = (stage.fullScreenWidth - 150) * .5;
 			text.y = stage.fullScreenHeight * .5;
 			addChild(text);

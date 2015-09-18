@@ -9,15 +9,18 @@
 	<fx:Script>
 		<![CDATA[
 			import mx.collections.ArrayCollection;
-
+			
 			import core.Config;
-			import core.data.SUiObject;
-
+			import core.SUi;
+			
 			import manager.SEventManager;
-
+			
 			import utils.FilesUtil;
 
-			private var mCurrent : SUiObject;
+
+
+
+			private var mCurrent : SUi;
 
 			protected override function init() : void
 			{
@@ -28,7 +31,7 @@
 					Config.error("找不到文件:" + mCurrent.nativeUrl);
 					return;
 				}
-				var data : SUiObject = SUiObject.parseByteArray(bytes);
+				var data : SUi = SUi.parseByteArray(bytes);
 				txt_width.text = data.width + "";
 				txt_height.text = data.height + "";
 				txt_name.text = data.className;
@@ -53,7 +56,7 @@
 				var file : File = new File(mCurrent.nativeUrl);
 				//删除自己
 				file.exists && file.deleteFile();
-				var data : SUiObject = mCurrent;
+				var data : SUi = mCurrent;
 				data.width = int(txt_width.text);
 				data.height = int(txt_height.text);
 				data.className = txt_name.text;

@@ -11,8 +11,8 @@ package utils
 
 	import core.Config;
 
-	import manager.SEventManager;
 	import manager.LocalShareManager;
+	import manager.SEventManager;
 
 	public class CLoader
 	{
@@ -65,8 +65,7 @@ package utils
 
 			function onSelect(evt : Event) : void
 			{
-				Config.saveProjectData("", "", file.nativePath, "");
-				SEventManager.dispatch(SEventManager.SHOW_VIEW);
+				Config.saveProjectData(Config.projectName, Config.projectUrl, file.nativePath, Config.projectCodeUrl);
 			}
 		}
 

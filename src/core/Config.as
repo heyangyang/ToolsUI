@@ -2,6 +2,7 @@ package core
 {
 	import flash.display.Bitmap;
 	import flash.display.BitmapData;
+	import flash.display.Sprite;
 	import flash.display.Stage;
 	import flash.events.Event;
 	import flash.events.KeyboardEvent;
@@ -14,19 +15,10 @@ package core
 	
 	import spark.components.WindowedApplication;
 	
-	import core.data.SUiObject;
-	
 	import manager.LocalShareManager;
 	import manager.SEventManager;
 	
 	import utils.FilesUtil;
-	
-	import view.component.CButton;
-	import view.component.CList;
-	import view.component.CSprite;
-	import view.component.CTabBar;
-	import view.component.CTextDisplay;
-	import view.component.CView;
 
 	public class Config
 	{
@@ -50,9 +42,9 @@ package core
 		/**
 		 * 当前界面数据
 		 */
-		private static var sCurrent : SUiObject = new SUiObject();
+		private static var sCurrent : SUi = new SUi();
 
-		public static function get current() : SUiObject
+		public static function get current() : SUi
 		{
 			return sCurrent;
 		}
@@ -62,10 +54,11 @@ package core
 		 * @param data
 		 *
 		 */
-		public static function setCurrentUI(data : SUiObject) : void
+		public static function setCurrentUI(data : SUi) : void
 		{
 			sCurrent.clone(data);
 			SEventManager.dispatch(SEventManager.SHOW_VIEW);
+			SEventManager.dispatch(SEventManager.UPDATE_VIEW, sCurrent.view);
 		}
 
 		private static var sRootXml : XML;
@@ -151,39 +144,22 @@ package core
 		 * @return
 		 *
 		 */
-		public static function createComponetByName(res_name : String) : CSprite
+		public static function createDisplayByName(name : String) : Sprite
 		{
-			var child : CSprite;
+			var child : Sprite;
 			try
 			{
-				if (res_name == "TextField")
-					child = new CTextDisplay();
-				else if (res_name == "TabBar")
-					child = new CTabBar();
-				else if (res_name == "List")
-					child = new CList();
-				else if (res_name == "View")
-					child = new CView();
-				else
-				{
-					var class_res : Class = Config.appDomain.getDefinition(res_name) as Class;
-					var data : * = new class_res();
-					if (data is BitmapData)
-						data = new Bitmap(data);
-					child = new CSprite(data);
-				}
-
-				if (res_name.indexOf("btn_") >= 0 || res_name.indexOf("img_") >= 0)
-				{
-					return new CButton(child);
-				}
+				var class_res : Class = Config.appDomain.getDefinition(name) as Class;
+				child = new Sprite();
+				var data : * = new class_res();
+				if (data is BitmapData)
+					data = new Bitmap(data);
+				child.addChild(data);
 			}
 			catch (e : Error)
 			{
-				error("丢失资源:" + res_name);
+				Config.alert("丢失资源:" + name);
 				trace(e);
-				child = new CTextDisplay();
-				child.isLostRes = true;
 			}
 			return child;
 		}

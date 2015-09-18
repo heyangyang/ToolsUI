@@ -7,53 +7,75 @@
 		 creationComplete="init(event)">
 	<fx:Script>
 		<![CDATA[
-			import view.component.SLayerView;
 			import mx.collections.ArrayCollection;
 			import mx.events.FlexEvent;
 
 			import spark.components.VGroup;
 
-			import manager.SEventManager;
 			import core.SEvent;
-			import core.data.SLayerData;
+
+			import manager.SEventManager;
+
+			import view.component.SLayer;
+			import view.component.SView;
 
 
-			private var layer : SLayerView;
+
+
+
+
+			private var mCurrView : SView;
 
 			protected function init(event : FlexEvent) : void
 			{
-				layer = SLayerView.getInstance();
 				var group : VGroup = new VGroup();
 				group.addElement(m_group);
 				controlBarContent = [group];
 				controlBarVisible = true;
-				SEventManager.addListener(SEventManager.UPDATE_LAYER, onUpdate);
+				SEventManager.addListener(SEventManager.UPDATE_VIEW, onUpdate);
 			}
 
-			protected function onUpdate(evt : SEvent) : void
+			protected function onUpdate(evt : SEvent = null) : void
 			{
-				var array : Array = [].concat(layer.list_layer);
-				array.sortOn("index", Array.DESCENDING);
-				list.dataProvider = new ArrayCollection(array);
-				list.selectedItem = layer.cur_layer;
+				if (evt)
+					mCurrView = evt.data as SView;
+				list.dataProvider = new ArrayCollection(changeToArray(mCurrView.getLayers()));
+				list.selectedItem = mCurrView.curLayer;
+			}
+
+			private function changeToArray(list : Vector.<SLayer>) : Array
+			{
+				var len : int = list.length;
+				var array : Array = [];
+				for (var i : int = 0; i < len; i++)
+				{
+					array.push(list[i]);
+				}
+				return array;
 			}
 
 			protected function btn_create_clickHandler(event : MouseEvent) : void
 			{
-				var layerData : SLayerData = layer.addLayer();
-				layer.selectItem = layerData;
+				var layer : SLayer = mCurrView.addLayer();
+				mCurrView.selectLayer = layer;
+				onUpdate();
 			}
 
 
 			protected function btn_delete_clickHandler(event : MouseEvent) : void
 			{
-				layer.removeLayer();
+				if (mCurrView.numChildren == 1)
+					return;
+				mCurrView.removeLayer(mCurrView.curLayer);
+				var selectedIndex : int = list.selectedIndex - 1;
+				selectedIndex = selectedIndex < 0 ? 0 : selectedIndex;
+				mCurrView.selectLayerIndex = selectedIndex;
+				onUpdate();
 			}
 
 			protected function itemClick(event : Event) : void
 			{
-				if (list.selectedItem != layer.cur_layer)
-					layer.selectItem = list.selectedItem;
+				mCurrView.selectLayer = list.selectedItem;
 			}
 		]]>
 	</fx:Script>

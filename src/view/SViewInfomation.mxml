@@ -9,40 +9,32 @@
 		   xmlns:component="view.component.*">
 	<fx:Script>
 		<![CDATA[
+			import flash.filters.GlowFilter;
+			
 			import mx.events.FlexEvent;
 			import mx.events.ListEvent;
-
+			
 			import core.Config;
 			import core.SEvent;
-			import core.data.SUiObject;
-
+			import core.SUi;
+			
 			import manager.SEventManager;
-
+			
 			import utils.FilesUtil;
-
-			import view.component.CLoading;
+			
+			import view.component.SLoading;
 
 			[Bindable]
 			public static var classArray : Array = [];
 			[Bindable]
 			private var mFileXml : XML;
-			private var previewContainer : Sprite;
 			private var fileterText : String;
 
 			protected function init(event : FlexEvent) : void
 			{
-				previewContainer = new Sprite();
-				uiPreview.addChild(previewContainer);
 				SEventManager.addListener(SEventManager.SHOW_VIEW_TREE, onShowViewHanlder);
 				SEventManager.addListener(SEventManager.SHOW_COMPONENT, onShowComponentHanlder);
-				SEventManager.addListener(SEventManager.EVENT_RES_COMPLETE, onComplete);
 				search.setExcuteHanlder(searchHanlder);
-			}
-
-			private function onComplete(evt : SEvent) : void
-			{
-				while (previewContainer.numChildren > 0)
-					previewContainer.removeChildAt(0);
 			}
 
 			/**
@@ -124,10 +116,10 @@
 					view_tree.expandChildrenOf(view_tree.selectedItem, view_tree.isItemOpen(view_tree.selectedItem) ? false : true);
 					return;
 				}
-				CLoading.getInstance().show();
+				SLoading.getInstance().show();
 				var url : String = evt.itemRenderer.data.@nativePath;
 				var bytes : ByteArray = FilesUtil.getBytesFromeFile(url, true);
-				Config.setCurrentUI(SUiObject.parseByteArray(bytes));
+				Config.setCurrentUI(SUi.parseByteArray(bytes));
 			}
 
 			/**
@@ -135,16 +127,16 @@
 			 */
 			private function onShowComponentHanlder(evt : SEvent) : void
 			{
-				while (previewContainer.numChildren > 0)
-					previewContainer.removeChildAt(0);
 				var xml : XML = evt.data as XML;
 				var name : String = xml.@label;
-				var child : DisplayObject = Config.createComponetByName(name);
-				previewContainer.addChild(child);
+				var child : DisplayObject = Config.createDisplayByName(name);
 				var scale : Number = 1;
 
-				if (child.width > uiPreview.width)
+				if (child.width > uiPreview.width || child.width < child.height)
 					scale = uiPreview.width / child.width;
+				else if (child.height > uiPreview.height || child.width > child.height)
+					scale = uiPreview.height / child.height;
+
 				//如果有原件x，y小于0，则计算出小于0的
 				var childx : int = 0, childy : int = 0;
 				var container : DisplayObjectContainer = child as DisplayObjectContainer;
@@ -162,9 +154,15 @@
 							childy = tmp_child.y;
 					}
 				}
+				var bmd : BitmapData = new BitmapData(uiPreview.width, uiPreview.height, true, 0);
+				var matrix : Matrix = new Matrix();
+				matrix.scale(scale, scale);
+				matrix.tx = (uiPreview.width - child.width * scale - childx) * 0.5;
+				matrix.ty = (uiPreview.height - child.height * scale - childy) * 0.5;
+				bmd.draw(child, matrix);
+				uiPreview.source && BitmapData(uiPreview.source).dispose();
+				uiPreview.source = bmd;
 				child.scaleX = child.scaleY = scale;
-				child.x = (uiPreview.width - child.width * scale - childx) * 0.5;
-				child.y = (uiPreview.height - child.height * scale - childy) * 0.5;
 			}
 		]]>
 	</fx:Script>
@@ -194,9 +192,9 @@
 		<s:Panel title="显示"
 				 width="100%"
 				 height="25%">
-			<mx:UIComponent width="100%"
-							height="100%"
-							id="uiPreview"/>
+			<s:Image width="100%"
+					 height="100%"
+					 id="uiPreview"/>
 		</s:Panel>
 		<view:SViewResource/>
 	</s:VGroup>

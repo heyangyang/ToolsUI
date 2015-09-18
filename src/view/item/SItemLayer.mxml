@@ -8,14 +8,14 @@
 				creationComplete="init(event)">
 	<fx:Script>
 		<![CDATA[
-			import view.component.SLayerView;
 			import mx.events.FlexEvent;
 
 			import spark.events.TextOperationEvent;
 
-			import core.data.SLayerData;
+			import view.component.SLayer;
 
-			private var layer : SLayerData;
+
+			private var mLayer : SLayer;
 
 			protected function init(event : FlexEvent) : void
 			{
@@ -26,39 +26,51 @@
 			override public function set data(value : Object) : void
 			{
 				super.data = value;
-				layer = value as SLayerData;
-				if (layer == null)
+				mLayer && mLayer.removeEventListener(Event.CHANGE, changeHalder)
+				mLayer = value as SLayer;
+				if (mLayer == null)
 					return;
-				txt_text.text = layer.name;
-				check_show.selected = layer.visible;
-				check_lock.selected = layer.lock;
-				txt_num.text = layer.layer.numChildren == 0 ? "空" : "" + layer.layer.numChildren;
+				updateLayer(mLayer);
+				mLayer.addEventListener(Event.CHANGE, changeHalder);
+			}
+
+			private function changeHalder(evt : Event) : void
+			{
+				updateLayer(mLayer);
+			}
+
+			private function updateLayer(value : SLayer) : void
+			{
+				txt_text.text = value.name;
+				check_show.selected = value.visible;
+				check_lock.selected = value.isLock;
+				txt_num.text = value.numChildren == 0 ? "空" : "" + value.numChildren;
 			}
 
 			protected function check_show_clickHandler(event : MouseEvent) : void
 			{
-				if (layer == null)
+				if (mLayer == null)
 					return;
-				layer.visible = check_show.selected;
+				mLayer.visible = check_show.selected;
 			}
 
 			protected function check_lock_clickHandler(event : MouseEvent) : void
 			{
-				if (layer == null)
+				if (mLayer == null)
 					return;
-				layer.lock = check_lock.selected;
+				mLayer.isLock = check_lock.selected;
 			}
 
 			protected function check_delete_clickHandler(event : MouseEvent) : void
 			{
-				if (layer == null)
-					return;
-				SLayerView.getInstance().removeLayer(layer);
+//				if (layer == null)
+//					return;
+//				SLayerView.getInstance().removeLayer(layer);
 			}
 
 			protected function txt_text_changeHandler(event : TextOperationEvent) : void
 			{
-				layer.name = txt_text.text;
+				mLayer.name = txt_text.text;
 			}
 		]]>
 	</fx:Script>

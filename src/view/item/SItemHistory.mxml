@@ -7,8 +7,8 @@
 	<fx:Script>
 		<![CDATA[
 			import mx.events.FlexEvent;
-
-			import manager.HistoryManager;
+			
+			import manager.SHistoryManager;
 
 			protected function init(event : FlexEvent) : void
 			{
@@ -20,7 +20,18 @@
 				super.data = value;
 				if (value == null)
 					return;
-				text.text = (value.type == HistoryManager.CHANGE ? "修改组件" : "添加组件");
+				switch (value.type)
+				{
+					case SHistoryManager.MOVE:
+						text.text = "移动组件";
+						break;
+					case SHistoryManager.ADD:
+						text.text = "添加组件";
+						break;
+					case SHistoryManager.DEL:
+						text.text = "删除组件";
+						break;
+				}
 			}
 		]]>
 	</fx:Script>

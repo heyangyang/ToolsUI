@@ -10,10 +10,10 @@
 		<![CDATA[
 			import mx.collections.ArrayCollection;
 			import mx.validators.Validator;
-
+			
 			import core.Config;
-			import core.data.SUiObject;
-
+			import core.SUi;
+			
 			import manager.SEventManager;
 			private var validatorArr : Array;
 
@@ -41,7 +41,7 @@
 
 				if (vrs.length != 0)
 					return;
-				var uiObject : SUiObject = new SUiObject();
+				var uiObject : SUi = new SUi();
 				uiObject.className = txt_mapname.text;
 				uiObject.width = int(txt_tileWidth.text);
 				uiObject.height = int(txt_tileHeight.text);
