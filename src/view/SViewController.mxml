@@ -125,7 +125,7 @@
 			protected function dragDropHandler(evt : DragEvent) : void
 			{
 				var xml : XML = evt.dragSource.dataForFormat("res") as XML;
-				xml && mController.push(xml);
+				xml && mController.createDisplayByXml(xml);
 			}
 
 			/**

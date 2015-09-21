@@ -9,9 +9,11 @@
 	<fx:Script>
 		<![CDATA[
 			import mx.events.FlexEvent;
-
+			
 			import spark.events.TextOperationEvent;
-
+			
+			import manager.SelectedManager;
+			
 			import view.component.SLayer;
 
 
@@ -59,13 +61,14 @@
 				if (mLayer == null)
 					return;
 				mLayer.isLock = check_lock.selected;
-			}
-
-			protected function check_delete_clickHandler(event : MouseEvent) : void
-			{
-//				if (layer == null)
-//					return;
-//				SLayerView.getInstance().removeLayer(layer);
+				if (mLayer.isLock)
+				{
+					SelectedManager.clear();
+				}
+				else
+				{
+					SelectedManager.setList(mLayer.getChilds());
+				}
 			}
 
 			protected function txt_text_changeHandler(event : TextOperationEvent) : void

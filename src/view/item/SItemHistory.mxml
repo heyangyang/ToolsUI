@@ -31,6 +31,12 @@
 					case SHistoryManager.DEL:
 						text.text = "删除组件";
 						break;
+					case SHistoryManager.SELECT:
+						text.text = "选中组件";
+						break;
+					case SHistoryManager.INDEX:
+						text.text = "更换组件层级";
+						break;
 				}
 			}
 		]]>

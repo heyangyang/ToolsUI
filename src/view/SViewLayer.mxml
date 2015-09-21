@@ -32,6 +32,7 @@
 				group.addElement(m_group);
 				controlBarContent = [group];
 				controlBarVisible = true;
+				btn_delete.enabled = btn_create.enabled = false;
 				SEventManager.addListener(SEventManager.UPDATE_VIEW, onUpdate);
 			}
 
@@ -39,6 +40,7 @@
 			{
 				if (evt)
 					mCurrView = evt.data as SView;
+				btn_delete.enabled = btn_create.enabled = true;
 				list.dataProvider = new ArrayCollection(changeToArray(mCurrView.getLayers()));
 				list.selectedItem = mCurrView.curLayer;
 			}
@@ -47,7 +49,7 @@
 			{
 				var len : int = list.length;
 				var array : Array = [];
-				for (var i : int = 0; i < len; i++)
+				for (var i : int = len - 1; i >= 0; i--)
 				{
 					array.push(list[i]);
 				}

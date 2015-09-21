@@ -7,6 +7,8 @@ package manager
 		public static const ADD : String = "add";
 		public static const MOVE : String = "move";
 		public static const DEL : String = "del";
+		public static const SELECT : String = "select";
+		public static const INDEX : String = "index";
 		private static var mList : Array = [];
 
 		public static function push(list : Vector.<SDisplay>, type : String) : void
@@ -38,33 +40,52 @@ package manager
 			var type : String = data.type;
 			SelectedManager.clear();
 
+			var child : SDisplay;
 			for each (var history : SHistory in list)
 			{
+				child = history.display;
 				switch (type)
 				{
 					case ADD:
-						history.display.removeFromParent();
+						child.removeFromParent();
 						break;
 					case MOVE:
-						history.display.parseObject(history.data);
-						SelectedManager.push(history.display);
+						child.parseObject(history.data);
+						SelectedManager.push(child);
 						break;
 					case DEL:
-						history.layer.addDisplay(history.display);
-						SelectedManager.push(history.display);
+						history.layer.addDisplay(child);
+						SelectedManager.push(child);
+						break;
+					case SELECT:
+						SelectedManager.push(child);
+						break;
+					case INDEX:
+						child.getParent().setDisplayIndex(child, child.index);
 						break;
 				}
 				history.dispose();
 			}
-			if (type == ADD && mList.length >= 1)
+			if (type == SELECT)
 			{
-				data = mList[mList.length - 1];
 				SelectedManager.clear();
-				for each (history in data.list)
+				if (mList.length >= 1)
 				{
-					SelectedManager.push(history.display);
+					data = mList[mList.length - 1];
+					for each (history in data.list)
+					{
+						SelectedManager.push(history.display);
+					}
 				}
 			}
+			if (mList.length == 0)
+				SelectedManager.clear();
+			SEventManager.dispatch(SEventManager.UPDATE_HISTORY, mList);
+		}
+
+		public static function clear() : void
+		{
+			mList.length = 0;
 			SEventManager.dispatch(SEventManager.UPDATE_HISTORY, mList);
 		}
 	}

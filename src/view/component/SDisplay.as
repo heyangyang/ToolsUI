@@ -11,6 +11,7 @@ package view.component
 		public var swf : String;
 		public var type : String;
 		public var touchable : Boolean;
+		internal var mIndex : int;
 		protected var mParent : SLayer;
 
 		public function SDisplay()
@@ -50,7 +51,7 @@ package view.component
 
 		public function parserByteArray(bytes : ByteArray) : void
 		{
-			parseObject( bytes.readObject());
+			parseObject(bytes.readObject());
 			parseXml(Config.getOtrXmlByType(type));
 		}
 
@@ -70,6 +71,7 @@ package view.component
 			data.swf = swf;
 			data.type = type;
 			data.visible = visible;
+			data.index = mIndex;
 			return data;
 		}
 
@@ -80,9 +82,16 @@ package view.component
 			swf = data.swf;
 			x = data.x;
 			y = data.y;
+			mIndex = data.index;
 			visible = data.visible;
 		}
 
+		/**
+		 * 检测碰撞
+		 * @param rect
+		 * @param list 如果碰撞了，则添加到列表
+		 *
+		 */
 		public function hitTestRectangle(rect : DisplayObject, list : Vector.<SDisplay>) : void
 		{
 			if (rect.hitTestObject(this))
@@ -114,6 +123,11 @@ package view.component
 		public function getParent() : SLayer
 		{
 			return mParent;
+		}
+
+		public function get index() : int
+		{
+			return mIndex;
 		}
 	}
 }

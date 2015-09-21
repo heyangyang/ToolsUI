@@ -66,10 +66,20 @@ package view.component
 			if (mChilds.indexOf(child) != -1)
 				return;
 			child.setParent(this);
+			child.mIndex = index;
 			mChilds.splice(index, 0, child);
 			addChildAt(child, index);
 			mNumChildren++;
 			dispatchEvent(new Event(Event.CHANGE));
+		}
+
+		public function setDisplayIndex(child : SDisplay, index : int) : void
+		{
+			setChildIndex(child, index);
+			mChilds[index].mIndex = child.mIndex;
+			mChilds.splice(child.mIndex, 1);
+			mChilds.splice(child.mIndex > index ? index : index + 1, 0, child);
+			child.mIndex = index;
 		}
 
 		public function removeDisplay(child : SDisplay) : void
@@ -126,12 +136,23 @@ package view.component
 			}
 		}
 
+		/**
+		 * 检测碰撞
+		 * @param rect
+		 * @param list 如果碰撞了，则添加到列表
+		 *
+		 */
 		public override function hitTestRectangle(rect : DisplayObject, list : Vector.<SDisplay>) : void
 		{
 			for each (var child : SDisplay in mChilds)
 			{
 				child.hitTestRectangle(rect, list);
 			}
+		}
+
+		public function getChilds() : Vector.<SDisplay>
+		{
+			return mChilds;
 		}
 
 	}

@@ -74,7 +74,7 @@ package view.component
 			var len : int = bytes.readInt();
 			for (var i : int = 0; i < len; i++)
 			{
-				if (mLayers[i] == null)
+				if (i >= mNumChildren)
 					addLayer();
 				mLayers[i].parserByteArray(bytes.readObject());
 			}
@@ -88,6 +88,12 @@ package view.component
 			}
 		}
 
+		/**
+		 * 检测碰撞
+		 * @param rect
+		 * @param list 如果碰撞了，则添加到列表
+		 *
+		 */
 		public override function hitTestRectangle(rect : DisplayObject, list : Vector.<SDisplay>) : void
 		{
 			for each (var child : SLayer in mLayers)
@@ -99,6 +105,25 @@ package view.component
 		public function getLayers() : Vector.<SLayer>
 		{
 			return mLayers;
+		}
+
+		/**
+		 * 所有图层的原件。
+		 * @return
+		 *
+		 */
+		public override function getChilds() : Vector.<SDisplay>
+		{
+			var childs : Vector.<SDisplay> = new Vector.<SDisplay>();
+			var child : SDisplay;
+			for each (var layer : SLayer in mLayers)
+			{
+				for each (child in layer.getChilds())
+				{
+					childs.push(child);
+				}
+			}
+			return childs;
 		}
 
 		public override function removeFromParent() : void
