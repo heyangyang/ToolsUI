@@ -15,7 +15,11 @@
 		<field name="height" label="height" type="int" value="" />
 	</component>
 
-	<com pkgName="com.mage" classType="Image" type="img">
+	<com pkgName="com.image" classType="Image" type="img">
+		<field name="touchable" type="bool" value="false" />
+	</com>
+	
+	<com pkgName="com.btn" classType="Button" type="btn">
 		<field name="touchable" type="bool" value="false" />
 	</com>
 
