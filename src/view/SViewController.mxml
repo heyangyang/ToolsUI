@@ -11,24 +11,24 @@
 			import mx.events.DragEvent;
 			import mx.events.ItemClickEvent;
 			import mx.managers.DragManager;
-
+			
 			import spark.components.VGroup;
 			import spark.events.IndexChangeEvent;
-
+			
 			import core.Config;
-			import core.SUi;
-
+			import core.SEvent;
+			
 			import manager.SCodeManager;
 			import manager.SEventManager;
 			import manager.SelectedManager;
-
+			
 			import view.component.SController;
 			import view.component.SView;
 
 
 
 
-
+			public static const UPDATE_SCALE : String = "UPDATE_SCALE";
 
 
 			[Bindable]
@@ -36,8 +36,7 @@
 			[Bindable]
 			public var SACLE_ARRAY : Array = ["25%", "50%", "100%", "200%", "400%", "800%"];
 			private var mController : SController;
-			private var mCurrent : SUi;
-			private var mView : SView;
+			private var mCurrent : SView;
 
 			protected function init(event : Event) : void
 			{
@@ -52,6 +51,7 @@
 				txt_code.visible = tabBar.visible = combox.visible = false;
 
 				SEventManager.addListener(SEventManager.SHOW_VIEW, onShowViewHandler, false, 1);
+				SEventManager.addListener(UPDATE_SCALE, updateScaleHandler);
 				addEventListener(NativeDragEvent.NATIVE_DRAG_ENTER, onDragInHandler);
 				addEventListener(NativeDragEvent.NATIVE_DRAG_DROP, onDropHandler);
 			}
@@ -67,7 +67,6 @@
 					Config.alert("没有找到ui路径");
 					return;
 				}
-				mView = mCurrent.view;
 				combox.x = canvas.width - combox.width - 10;
 				txt_status.x = combox.x - txt_status.width - 20;
 				tabBar.visible = true;
@@ -142,9 +141,9 @@
 				var xml : XML = evt.dragSource.dataForFormat("res") as XML;
 				if (!xml)
 					return;
-				if (mView.curLayer && !mView.curLayer.visible)
+				if (mCurrent.curLayer && !mCurrent.curLayer.visible)
 					Config.alert("图层隐藏了!");
-				else if (mView.curLayer)
+				else if (mCurrent.curLayer)
 					DragManager.acceptDragDrop(canvas);
 				else
 					Config.alert("请先创建图层!");
@@ -160,6 +159,11 @@
 				txt_code.visible = tabBar.selectedIndex == 1;
 				if (tabBar.selectedIndex == 1)
 					txt_code.text = SCodeManager.getAsCode(Config.current);
+			}
+
+			protected function updateScaleHandler(event : SEvent) : void
+			{
+				combox.textInput.text = event.data + "%";
 			}
 
 			/**
@@ -205,6 +209,7 @@
 	<s:TextArea width="100%"
 				height="100%"
 				fontSize="16"
+				fontFamily="Arial"
 				color="0x999999"
 				y="{tabBar.height}"
 				id="txt_code"

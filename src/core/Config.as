@@ -10,15 +10,17 @@ package core
 	import flash.system.ApplicationDomain;
 	import flash.ui.Keyboard;
 	import flash.utils.ByteArray;
-	
+
 	import mx.controls.Alert;
-	
+
 	import spark.components.WindowedApplication;
-	
+
 	import manager.LocalShareManager;
 	import manager.SEventManager;
-	
+
 	import utils.FilesUtil;
+
+	import view.component.SView;
 
 	public class Config
 	{
@@ -42,9 +44,9 @@ package core
 		/**
 		 * 当前界面数据
 		 */
-		private static var sCurrent : SUi = new SUi();
+		private static var sCurrent : SView;
 
-		public static function get current() : SUi
+		public static function get current() : SView
 		{
 			return sCurrent;
 		}
@@ -54,11 +56,11 @@ package core
 		 * @param data
 		 *
 		 */
-		public static function setCurrentUI(data : SUi) : void
+		public static function setCurrentUI(data : SView) : void
 		{
-			sCurrent.clone(data);
-			SEventManager.dispatch(SEventManager.SHOW_VIEW);
-			SEventManager.dispatch(SEventManager.UPDATE_VIEW, sCurrent.view);
+			sCurrent = data;
+			SEventManager.dispatch(SEventManager.SHOW_VIEW, sCurrent);
+			SEventManager.dispatch(SEventManager.UPDATE_VIEW, sCurrent);
 		}
 
 		private static var sRootXml : XML;
@@ -155,11 +157,12 @@ package core
 				if (data is BitmapData)
 					data = new Bitmap(data);
 				child.addChild(data);
+				child.name = name;
 			}
 			catch (e : Error)
 			{
+				child.name = "";
 				Config.alert("丢失资源:" + name);
-				trace(e);
 			}
 			return child;
 		}

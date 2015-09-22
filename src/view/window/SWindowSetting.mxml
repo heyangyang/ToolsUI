@@ -9,18 +9,19 @@
 	<fx:Script>
 		<![CDATA[
 			import mx.collections.ArrayCollection;
-			
+
 			import core.Config;
-			import core.SUi;
-			
+
 			import manager.SEventManager;
-			
+
 			import utils.FilesUtil;
 
+			import view.component.SView;
 
 
 
-			private var mCurrent : SUi;
+
+			private var mCurrent : SView;
 
 			protected override function init() : void
 			{
@@ -31,7 +32,8 @@
 					Config.error("找不到文件:" + mCurrent.nativeUrl);
 					return;
 				}
-				var data : SUi = SUi.parseByteArray(bytes);
+				var data : SView = new SView();
+				data.parserByteArray(bytes);
 				txt_width.text = data.width + "";
 				txt_height.text = data.height + "";
 				txt_name.text = data.className;
@@ -56,13 +58,13 @@
 				var file : File = new File(mCurrent.nativeUrl);
 				//删除自己
 				file.exists && file.deleteFile();
-				var data : SUi = mCurrent;
+				var data : SView = mCurrent;
 				data.width = int(txt_width.text);
 				data.height = int(txt_height.text);
 				data.className = txt_name.text;
 				data.packageName = txt_packName.text;
 				data.extendsName = comBox_extends.selectedItem.extends_name;
-				SEventManager.dispatch(SEventManager.SAVE_VIEW, data);
+				SEventManager.dispatch(SEventManager.SAVE_VIEW);
 				SEventManager.dispatch(SEventManager.SHOW_VIEW_TREE);
 				//如果目录空了，则删除目录
 				file = file.parent;

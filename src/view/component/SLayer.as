@@ -4,6 +4,8 @@ package view.component
 	import flash.events.Event;
 	import flash.utils.ByteArray;
 
+	import manager.SCodeManager;
+
 	public class SLayer extends SDisplay
 	{
 		public static function getDataType(type : String) : SDisplay
@@ -153,6 +155,16 @@ package view.component
 		public function getChilds() : Vector.<SDisplay>
 		{
 			return mChilds;
+		}
+
+		public override function getAsCode(manager : SCodeManager) : String
+		{
+			var code : String = "";
+			for each (var child : SDisplay in mChilds)
+			{
+				code += child.getAsCode(manager);
+			}
+			return code;
 		}
 
 	}

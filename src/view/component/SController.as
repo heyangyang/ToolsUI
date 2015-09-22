@@ -8,13 +8,16 @@ package view.component
 	import flash.events.KeyboardEvent;
 	import flash.events.MouseEvent;
 	import flash.ui.Keyboard;
-	
+	import flash.ui.Mouse;
+	import flash.ui.MouseCursor;
+
 	import core.Config;
-	import core.SUi;
-	
+
 	import manager.SEventManager;
 	import manager.SHistoryManager;
 	import manager.SelectedManager;
+
+	import view.SViewController;
 
 	public class SController extends Sprite
 	{
@@ -44,9 +47,6 @@ package view.component
 		 * 是否按下了shift
 		 */
 		private var mIsDownShiftKey : Boolean;
-		/**
-		 * 是否按下了空格
-		 */
 		private var mIsDownSpaceKey : Boolean;
 		/**
 		 * 是否在绘画
@@ -84,12 +84,12 @@ package view.component
 			addEventListener(MouseEvent.ROLL_OUT, onRollOut);
 		}
 
-		public function initUi(value : SUi) : void
+		public function initUi(value : SView) : void
 		{
 			SelectedManager.clear();
 			SHistoryManager.clear();
 			mView && mView.removeFromParent();
-			mView = value.view;
+			mView = value;
 			mGroup.addChild(mView);
 			mBg.graphics.beginFill(0x333333);
 			mBg.graphics.drawRect(0, 0, value.width, value.height);
@@ -168,7 +168,10 @@ package view.component
 				if (mHitTestList.length > 0 && !isSameArray(mHitTestList, SelectedManager.list))
 					updateSelectedAndUpdateHistory(mHitTestList, SHistoryManager.SELECT);
 				if (mHitTestList.length == 0)
+				{
 					SelectedManager.clear();
+					SEventManager.dispatch(SEventManager.UPDATE_FIELD);
+				}
 				mDragAnimation.graphics.clear();
 			}
 			else
@@ -262,6 +265,7 @@ package view.component
 			if (child)
 			{
 				var display : SDisplay = SLayer.getDataType(type);
+				display.isLostRes = child.name == "";
 				display.setDisplay(child);
 				display.x = mGroup.mouseX - child.width * .5;
 				display.y = mGroup.mouseY - child.height * .5;
@@ -291,7 +295,7 @@ package view.component
 
 		private function onRollOut(evt : Event) : void
 		{
-			mIsDownShiftKey = mIsDownSpaceKey = false;
+			mIsDownShiftKey = isDownSpaceKey = false;
 			mDragAnimation.graphics.clear();
 			stage.removeEventListener(KeyboardEvent.KEY_DOWN, onKeyDownHandler);
 			stage.removeEventListener(KeyboardEvent.KEY_UP, onKeyUpHandler);
@@ -333,6 +337,14 @@ package view.component
 							SelectedManager.setChlidIndex(-1);
 						}
 						break;
+					case Keyboard.EQUAL:
+						setScale(mScale + mScale);
+						SEventManager.dispatch(SViewController.UPDATE_SCALE, mScale * 100);
+						break;
+					case Keyboard.MINUS:
+						setScale(mScale * 0.5);
+						SEventManager.dispatch(SViewController.UPDATE_SCALE, mScale * 100);
+						break;
 				}
 			}
 			else
@@ -340,7 +352,8 @@ package view.component
 				switch (evt.keyCode)
 				{
 					case Keyboard.SPACE:
-						mIsDownSpaceKey = true;
+						
+						isDownSpaceKey = true;
 						break;
 					case Keyboard.BACKSPACE:
 					case Keyboard.DELETE:
@@ -385,7 +398,7 @@ package view.component
 			switch (evt.keyCode)
 			{
 				case Keyboard.SPACE:
-					mIsDownSpaceKey = false;
+					isDownSpaceKey = false;
 					break;
 			}
 		}
@@ -439,5 +452,26 @@ package view.component
 			}
 			return true;
 		}
+
+		/**
+		 * 是否按下了空格
+		 */
+		private function get isDownSpaceKey() : Boolean
+		{
+			return mIsDownSpaceKey;
+		}
+
+		/**
+		 * @private
+		 */
+		private function set isDownSpaceKey(value : Boolean) : void
+		{
+			mIsDownSpaceKey = value;
+			if (value)
+				Mouse.cursor = MouseCursor.BUTTON;
+			else
+				Mouse.cursor = MouseCursor.ARROW;
+		}
+
 	}
 }

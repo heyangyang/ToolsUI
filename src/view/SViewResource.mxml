@@ -42,7 +42,7 @@
 					resourceTree.dataProvider = null;
 					return;
 				}
-				Config.current.view.loadResourceComplete();
+				Config.current.loadResourceComplete();
 				filterTree();
 			}
 

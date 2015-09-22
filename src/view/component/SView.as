@@ -1,10 +1,22 @@
 package view.component
 {
 	import flash.display.DisplayObject;
+	import flash.filesystem.File;
 	import flash.utils.ByteArray;
+	
+	import core.Config;
+	
+	import manager.SCodeManager;
 
 	public class SView extends SLayer
 	{
+		public var className : String;
+		public var extendsName : String;
+		public var packageName : String;
+		private var mWidth : int;
+		private var mHeight : int;
+		private var mResourceList : Array;
+
 		private var mLayers : Vector.<SLayer>;
 		private var mNumChildren : int;
 		private var mCurLayer : SLayer;
@@ -14,6 +26,24 @@ package view.component
 			mLayers = new Vector.<SLayer>();
 			addLayer();
 			selectLayerIndex = 0;
+		}
+
+		public function setResource(... args) : void
+		{
+			if (args.length == 1 && args[0] is Array)
+				mResourceList = args[0];
+			else
+				mResourceList = args;
+		}
+
+		/**
+		 * ui所用到的资源
+		 * @return
+		 *
+		 */
+		public function getResource() : Array
+		{
+			return mResourceList;
 		}
 
 		public function set selectLayer(value : SLayer) : void
@@ -62,17 +92,41 @@ package view.component
 
 		public override function toByteArray() : ByteArray
 		{
+			var len : int, i : int;
 			var bytes : ByteArray = new ByteArray();
-			bytes.writeInt(mNumChildren);
-			for (var i : int = 0; i < mNumChildren; i++)
-				bytes.writeObject(mLayers[i].toByteArray());
+			bytes.writeUTF(className);
+			bytes.writeUTF(extendsName);
+			bytes.writeUTF(packageName);
+			bytes.writeInt(width);
+			bytes.writeInt(height);
+			len = mResourceList ? mResourceList.length : 0;
+			bytes.writeByte(len);
+			for (i = 0; i < len; i++)
+				bytes.writeUTF(mResourceList[i]);
+			var data : ByteArray = new ByteArray();
+			data.writeInt(mNumChildren);
+			for (i = 0; i < mNumChildren; i++)
+				data.writeObject(mLayers[i].toByteArray());
+			bytes.writeObject(data);
 			return bytes;
 		}
 
 		public override function parserByteArray(bytes : ByteArray) : void
 		{
-			var len : int = bytes.readInt();
-			for (var i : int = 0; i < len; i++)
+			var len : int, i : int;
+			className = bytes.readUTF();
+			extendsName = bytes.readUTF();
+			packageName = bytes.readUTF();
+			width = bytes.readInt();
+			height = bytes.readInt();
+			len = bytes.readByte();
+			var resourceList : Array = [];
+			for (i = 0; i < len; i++)
+				resourceList.push(bytes.readUTF());
+			setResource(resourceList);
+			bytes = bytes.readObject();
+			len = bytes.readInt();
+			for (i = 0; i < len; i++)
 			{
 				if (i >= mNumChildren)
 					addLayer();
@@ -131,6 +185,45 @@ package view.component
 			if (!parent)
 				return;
 			parent.removeChild(this);
+		}
+
+		override public function set width(value : Number) : void
+		{
+			mWidth = value;
+		}
+
+		override public function set height(value : Number) : void
+		{
+			mHeight = value;
+		}
+
+		override public function get width() : Number
+		{
+			return mWidth;
+		}
+
+		override public function get height() : Number
+		{
+			return mHeight;
+		}
+
+		public override function getAsCode(manager : SCodeManager) : String
+		{
+			var code : String = "";
+			for each (var child : SLayer in mLayers)
+			{
+				code += child.getAsCode(manager);
+			}
+			return code;
+		}
+		/**
+		 * 地址
+		 * @return
+		 *
+		 */
+		public function get nativeUrl() : String
+		{
+			return Config.projectUrl + File.separator + packageName + File.separator + className + Config.VIEW_EXTENSION;
 		}
 	}
 }

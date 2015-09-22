@@ -5,7 +5,7 @@ package core
 	import flash.display.NativeWindow;
 	import flash.events.Event;
 	import flash.ui.Keyboard;
-
+	
 	import manager.SEventManager;
 
 
@@ -44,7 +44,7 @@ package core
 			menuList.push(menuItem);
 			subMenuList.push({label: "新建界面", data: SEventManager.CREATE_VIEW, key: [Keyboard.CONTROL], keybroad: "n"});
 			subMenuList.push({label: "导入资源", data: SEventManager.IMPORT_RES, key: [Keyboard.CONTROL], keybroad: "o"});
-			subMenuList.push({label: "保存", data: SEventManager.SAVE_VIEW, key: [Keyboard.CONTROL], keybroad: "s", param: Config.current});
+			subMenuList.push({label: "保存", data: SEventManager.SAVE_VIEW, key: [Keyboard.CONTROL], keybroad: "s"});
 			//-------------------操作--------------------------
 
 			//-------------------生成--------------------------

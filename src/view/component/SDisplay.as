@@ -2,8 +2,10 @@ package view.component
 {
 	import flash.display.DisplayObject;
 	import flash.utils.ByteArray;
-	
+
 	import core.Config;
+
+	import manager.SCodeManager;
 
 	public class SDisplay extends SDisPlayBase
 	{
@@ -11,6 +13,7 @@ package view.component
 		public var swf : String;
 		public var type : String;
 		public var touchable : Boolean;
+		public var isLostRes : Boolean;
 		internal var mIndex : int;
 		protected var mParent : SLayer;
 
@@ -128,6 +131,11 @@ package view.component
 		public function get index() : int
 		{
 			return mIndex;
+		}
+
+		public function getAsCode(manager : SCodeManager) : String
+		{
+			return "";
 		}
 	}
 }

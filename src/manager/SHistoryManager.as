@@ -9,6 +9,7 @@ package manager
 		public static const DEL : String = "del";
 		public static const SELECT : String = "select";
 		public static const INDEX : String = "index";
+		public static const CHANGE : String = "change";
 		private static var mList : Array = [];
 
 		public static function push(list : Vector.<SDisplay>, type : String) : void
@@ -25,6 +26,7 @@ package manager
 			}
 			mList.push({"list": saveList, "type": type});
 			SEventManager.dispatch(SEventManager.UPDATE_HISTORY, mList);
+			SEventManager.dispatch(SEventManager.UPDATE_FIELD, list);
 		}
 
 		/**

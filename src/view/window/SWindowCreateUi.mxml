@@ -12,9 +12,10 @@
 			import mx.validators.Validator;
 			
 			import core.Config;
-			import core.SUi;
 			
 			import manager.SEventManager;
+			
+			import view.component.SView;
 			private var validatorArr : Array;
 
 			protected override function init() : void
@@ -41,7 +42,7 @@
 
 				if (vrs.length != 0)
 					return;
-				var uiObject : SUi = new SUi();
+				var uiObject : SView = new SView();
 				uiObject.className = txt_mapname.text;
 				uiObject.width = int(txt_tileWidth.text);
 				uiObject.height = int(txt_tileHeight.text);
@@ -59,7 +60,7 @@
 				//设置当前ui
 				Config.setCurrentUI(uiObject);
 				//保存
-				SEventManager.dispatch(SEventManager.SAVE_VIEW, uiObject);
+				SEventManager.dispatch(SEventManager.SAVE_VIEW);
 				SEventManager.dispatch(SEventManager.SHOW_VIEW_TREE);
 				onCloseHandler();
 			}

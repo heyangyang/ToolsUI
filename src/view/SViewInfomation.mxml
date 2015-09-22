@@ -9,20 +9,18 @@
 		   xmlns:component="view.component.*">
 	<fx:Script>
 		<![CDATA[
-			import flash.filters.GlowFilter;
-			
 			import mx.events.FlexEvent;
 			import mx.events.ListEvent;
 			
 			import core.Config;
 			import core.SEvent;
-			import core.SUi;
 			
 			import manager.SEventManager;
 			
 			import utils.FilesUtil;
 			
 			import view.component.SLoading;
+			import view.component.SView;
 
 			[Bindable]
 			public static var classArray : Array = [];
@@ -119,7 +117,9 @@
 				SLoading.getInstance().show();
 				var url : String = evt.itemRenderer.data.@nativePath;
 				var bytes : ByteArray = FilesUtil.getBytesFromeFile(url, true);
-				Config.setCurrentUI(SUi.parseByteArray(bytes));
+				var sview : SView = new SView();
+				sview.parserByteArray(bytes);
+				Config.setCurrentUI(sview);
 			}
 
 			/**

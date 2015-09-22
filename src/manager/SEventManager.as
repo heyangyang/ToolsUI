@@ -7,18 +7,18 @@ package manager
 	import flash.filesystem.File;
 	import flash.net.FileFilter;
 	import flash.utils.ByteArray;
-
+	
 	import mx.managers.PopUpManager;
-
+	
 	import core.Config;
 	import core.SEvent;
-	import core.SUi;
-
+	
 	import utils.CLoader;
 	import utils.FilesUtil;
 	import utils.GetSwfAllClass;
-
+	
 	import view.component.SLoading;
+	import view.component.SView;
 	import view.window.SWindowCreateProject;
 	import view.window.SWindowCreateUi;
 	import view.window.SWindowEditProject;
@@ -107,11 +107,10 @@ package manager
 			return instance;
 		}
 
-		private var mCurrent : SUi;
+		private var mCurrent : SView;
 
 		public function init() : void
 		{
-			mCurrent = Config.current;
 			addListener(CREATE_PROJECT, onCreateProtect);
 			addListener(EDIT_PROJECT, onEditProtect);
 			addListener(IMPORT_PROJECT, onImportProtect);
@@ -177,7 +176,7 @@ package manager
 				SLoading.getInstance().hide();
 			}
 
-			function saveCode(data : SUi) : void
+			function saveCode(data : SView) : void
 			{
 				//var code : String = CodeUtils.getAsCode(data);
 				var saveDirectory : String = saveFile.nativePath + "\\" + String(data.extendsName.split(".").pop()).toLocaleLowerCase();
@@ -193,7 +192,7 @@ package manager
 				var len : int = file_list.length;
 				var tmp_file : File;
 				var bytes : ByteArray;
-				var viewData : SUi;
+				var viewData : SView;
 				for (var i : int = 0; i < len; i++)
 				{
 					tmp_file = file_list[i];
@@ -295,8 +294,10 @@ package manager
 			}
 		}
 
-		public function onStartLoaderResSwf(evt : Event = null) : void
+		public function onStartLoaderResSwf(evt : SEvent = null) : void
 		{
+			if (evt)
+				mCurrent = evt.data as SView;
 			var nativePath : String, name : String;
 			var resourceList : Array = mCurrent.getResource();
 			loadCount = resourceList ? resourceList.length : 0;
@@ -309,7 +310,7 @@ package manager
 			}
 
 			mAllXml = <root/>;
-			
+
 			for (var i : int = 0; i < loadCount; i++)
 			{
 				name = resourceList[i].split(".").shift();
@@ -367,7 +368,7 @@ package manager
 		 */
 		private function onSaveView(evt : SEvent) : void
 		{
-			var data : SUi = evt.data as SUi;
+			var data : SView = Config.current;
 			if (!data || !data.className)
 			{
 				Config.alert("请先创建UI!");
