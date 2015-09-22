@@ -29,6 +29,12 @@
 	<miss>
 		<field name="替换资源" label="替换资源" type="string" value="" />
 	</miss>
-	<!--********* ********** -->
+	<!--*********资源丢失处理********** -->
 
+	<!--*********选中所有*********** -->
+	<selectAll>
+		<field name="x" label="x" type="string" value="" />
+		<field name="y" label="y" type="string" value="" />
+	</selectAll>
+	<!--*********选中所有*********** -->
 </root>
