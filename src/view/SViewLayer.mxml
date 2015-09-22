@@ -66,7 +66,7 @@
 
 			protected function btn_delete_clickHandler(event : MouseEvent) : void
 			{
-				if (mCurrView.numChildren == 1)
+				if (!mCurrView || mCurrView.numChildren == 1)
 					return;
 				mCurrView.removeLayer(mCurrView.curLayer);
 				var selectedIndex : int = list.selectedIndex - 1;
@@ -77,6 +77,8 @@
 
 			protected function itemClick(event : Event) : void
 			{
+				if (!mCurrView)
+					return;
 				mCurrView.selectLayer = list.selectedItem;
 			}
 		]]>

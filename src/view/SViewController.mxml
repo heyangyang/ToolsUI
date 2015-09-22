@@ -11,17 +11,23 @@
 			import mx.events.DragEvent;
 			import mx.events.ItemClickEvent;
 			import mx.managers.DragManager;
-			
+
 			import spark.components.VGroup;
 			import spark.events.IndexChangeEvent;
-			
+
 			import core.Config;
 			import core.SUi;
-			
+
+			import manager.SCodeManager;
 			import manager.SEventManager;
-			
+			import manager.SelectedManager;
+
 			import view.component.SController;
 			import view.component.SView;
+
+
+
+
 
 
 
@@ -152,8 +158,8 @@
 			{
 				txt_status.visible = combox.visible = mController.visible = tabBar.selectedIndex == 0;
 				txt_code.visible = tabBar.selectedIndex == 1;
-//				if (tabBar.selectedIndex == 1)
-//					txt_code.text = CodeUtils.getAsCode(Config.view);
+				if (tabBar.selectedIndex == 1)
+					txt_code.text = SCodeManager.getAsCode(Config.current);
 			}
 
 			/**
@@ -164,6 +170,11 @@
 			{
 				mController.setScale(int(combox.selectedItem.replace("%", "")) / 100);
 				combox.textInput.text = combox.selectedItem + "%";
+			}
+
+			protected function alignChangeHandler(event : Event) : void
+			{
+				SelectedManager.sortOn(event.currentTarget.label);
 			}
 		]]>
 	</fx:Script>
@@ -210,13 +221,17 @@
 				 paddingTop="4"
 				 paddingLeft="4"/>
 		<s:Button label="上"
-				  width="35"/>
+				  width="35"
+				  click="alignChangeHandler(event)"/>
 		<s:Button label="下"
-				  width="35"/>
+				  width="35"
+				  click="alignChangeHandler(event)"/>
 		<s:Button label="左"
-				  width="35"/>
+				  width="35"
+				  click="alignChangeHandler(event)"/>
 		<s:Button label="右"
-				  width="35"/>
+				  width="35"
+				  click="alignChangeHandler(event)"/>
 		<s:Label paddingLeft="4"
 				 paddingTop="4"
 				 text="vgap"/>

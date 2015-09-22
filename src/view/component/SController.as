@@ -8,10 +8,10 @@ package view.component
 	import flash.events.KeyboardEvent;
 	import flash.events.MouseEvent;
 	import flash.ui.Keyboard;
-
+	
 	import core.Config;
 	import core.SUi;
-
+	
 	import manager.SEventManager;
 	import manager.SHistoryManager;
 	import manager.SelectedManager;
@@ -80,14 +80,14 @@ package view.component
 			mGroup.addChild(mBg);
 			mGroup.addChild(mBgImage);
 			addChild(mDragAnimation);
-			SelectedManager.clear();
-			SHistoryManager.clear();
 			addEventListener(MouseEvent.ROLL_OVER, onRollOver);
 			addEventListener(MouseEvent.ROLL_OUT, onRollOut);
 		}
 
 		public function initUi(value : SUi) : void
 		{
+			SelectedManager.clear();
+			SHistoryManager.clear();
 			mView && mView.removeFromParent();
 			mView = value.view;
 			mGroup.addChild(mView);
@@ -113,8 +113,8 @@ package view.component
 			if (child && SelectedManager.list.indexOf(child) == -1)
 			{
 				SelectedManager.clear();
+				SelectedManager.setTmpTarget(child);
 			}
-			SelectedManager.push(evt.target as SDisplay);
 		}
 
 		/**
@@ -137,7 +137,7 @@ package view.component
 			if (!mIsDrawing)
 			{
 				//如果有选中的组件，则移动组件
-				if (SelectedManager.numChildren > 0)
+				if (SelectedManager.numChildren > 0 || SelectedManager.tmpTarget)
 				{
 					SelectedManager.move((mouseX - mLastMouseX) / mScale, (mouseY - mLastMouseY) / mScale);
 					mLastMouseX = mouseX;
@@ -173,7 +173,11 @@ package view.component
 			}
 			else
 			{
-				onComponentDownHandler(evt.target as SDisplay);
+				if (SelectedManager.tmpTarget)
+				{
+					onComponentDownHandler(SelectedManager.tmpTarget);
+					SelectedManager.setTmpTarget(null);
+				}
 				if (SelectedManager.numChildren == 0)
 					return;
 				//没有移动
