@@ -15,8 +15,8 @@ package core
 
 	import spark.components.WindowedApplication;
 
-	import manager.LocalShareManager;
-	import manager.SEventManager;
+	import managers.LocalShareManager;
+	import managers.SEventManager;
 
 	import utils.FilesUtil;
 

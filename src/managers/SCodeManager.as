@@ -1,4 +1,4 @@
-package manager
+package managers
 {
 	import flash.utils.Dictionary;
 
@@ -16,8 +16,8 @@ package manager
 			return code.getCode();
 		}
 		private var mSpaceDictionary : Dictionary = new Dictionary();
-		private const CODE_END : String = ";\n";
-		private const ENTER : String = "\n";
+		public static const CODE_END : String = ";\n";
+		public static const ENTER : String = "\n";
 		private var mView : SView;
 		private var mPublicVariableCode : String = "";
 		private var mPartVariableCode : String = "";
@@ -36,10 +36,10 @@ package manager
 			var tmp_view_code : String = getViewCode();
 			code += "package " + Config.getXmlByType("package")[0].@pkgName + "." + mView.packageName + ENTER;
 			code += "{" + ENTER;
-			code += getSpace(1) + mImportPackageCode.split(CODE_END).join(CODE_END + getSpace(1)) + ENTER;
+			code += getSpace(1) + mImportPackageCode + ENTER;
 			code += getSpace(1) + "public class " + mView.className + (" extends " + mView.extendsName.split(".").pop()) + ENTER;
 			code += getSpace(1) + "{" + ENTER;
-			code += getSpace(2) + mPublicVariableCode.split(CODE_END).join(CODE_END + getSpace(2)) + ENTER;
+			code += mPublicVariableCode + ENTER;
 			code += getSpace(2) + "public function " + mView.className + "()" + ENTER;
 			code += getSpace(2) + "{" + ENTER;
 			code += getSpace(3) + "super()" + ENTER;
@@ -64,10 +64,11 @@ package manager
 			code += getSpace(space_num) + "{" + ENTER;
 			//优先解析出代码
 			var content : String = mView.getAsCode(this);
+			space_num = 3;
 			//局部函数声明
-			code += getSpace(space_num) + mPartVariableCode.split(CODE_END).join(CODE_END + getSpace(space_num));
+			code += getSpace(space_num) + mPartVariableCode + ENTER;
+			code += getSpace(space_num) + content.split(CODE_END).join(CODE_END + getSpace(space_num));
 			code += ENTER;
-			code += content;
 			space_num = 2
 			code += getSpace(space_num) + "}" + ENTER;
 			return code;

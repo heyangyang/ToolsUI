@@ -13,9 +13,9 @@ package view.component
 
 	import core.Config;
 
-	import manager.SEventManager;
-	import manager.SHistoryManager;
-	import manager.SelectedManager;
+	import managers.SEventManager;
+	import managers.SHistoryManager;
+	import managers.SelectedManager;
 
 	import view.SViewController;
 
@@ -48,6 +48,7 @@ package view.component
 		 */
 		private var mIsDownShiftKey : Boolean;
 		private var mIsDownSpaceKey : Boolean;
+
 		/**
 		 * 是否在绘画
 		 */
@@ -109,7 +110,12 @@ package view.component
 			var child : SDisplay = evt.target as SDisplay;
 			mStartMouseX = mLastMouseX = mouseX;
 			mStartMouseY = mLastMouseY = mouseY;
-			mIsDrawing = child == null;
+			mIsDrawing = !child || child.getParent().isLock;
+			if (mIsDrawing)
+			{
+				SelectedManager.setTmpTarget(null);
+				return;
+			}
 			if (child && SelectedManager.list.indexOf(child) == -1)
 			{
 				SelectedManager.clear();
@@ -178,6 +184,8 @@ package view.component
 			{
 				if (SelectedManager.tmpTarget)
 				{
+					if (SelectedManager.tmpTarget.getParent().isLock)
+						return;
 					onComponentDownHandler(SelectedManager.tmpTarget);
 					SelectedManager.setTmpTarget(null);
 				}
@@ -352,7 +360,7 @@ package view.component
 				switch (evt.keyCode)
 				{
 					case Keyboard.SPACE:
-						
+
 						isDownSpaceKey = true;
 						break;
 					case Keyboard.BACKSPACE:

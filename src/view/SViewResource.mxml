@@ -23,7 +23,7 @@
 			import core.Config;
 			import core.SEvent;
 
-			import manager.SEventManager;
+			import managers.SEventManager;
 
 
 			private var mData : XML;

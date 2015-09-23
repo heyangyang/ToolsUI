@@ -12,7 +12,7 @@
 			
 			import core.Config;
 			
-			import manager.SEventManager;
+			import managers.SEventManager;
 
 			private static var sCurWindow : SWindowBase;
 

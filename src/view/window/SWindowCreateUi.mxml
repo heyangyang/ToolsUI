@@ -13,7 +13,7 @@
 			
 			import core.Config;
 			
-			import manager.SEventManager;
+			import managers.SEventManager;
 			
 			import view.component.SView;
 			private var validatorArr : Array;

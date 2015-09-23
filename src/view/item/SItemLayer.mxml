@@ -12,7 +12,7 @@
 			
 			import spark.events.TextOperationEvent;
 			
-			import manager.SelectedManager;
+			import managers.SelectedManager;
 			
 			import view.component.SLayer;
 

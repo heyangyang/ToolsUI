@@ -25,9 +25,9 @@
 			import core.Config;
 			import core.SEvent;
 
-			import manager.SEventManager;
-			import manager.SHistoryManager;
-			import manager.SelectedManager;
+			import managers.SEventManager;
+			import managers.SHistoryManager;
+			import managers.SelectedManager;
 
 			import view.component.SDisplay;
 
@@ -191,7 +191,7 @@
 				var display : SDisplay = mList[0];
 
 				//全选特殊处理
-				if (mList.length > 0)
+				if (mList.length > 1)
 				{
 					var moveDistance : int = int(value) - (field == "x" ? min_x : min_y);
 					//记录历史记录
@@ -220,6 +220,7 @@
 						display[field] = value == "true";
 					else
 						display[field] = value;
+					SEventManager.dispatch(SEventManager.UPDATE_FIELD, SelectedManager.list);
 				}
 			}
 

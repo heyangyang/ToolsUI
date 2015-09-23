@@ -1,4 +1,4 @@
-package manager
+package managers
 {
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
@@ -7,16 +7,16 @@ package manager
 	import flash.filesystem.File;
 	import flash.net.FileFilter;
 	import flash.utils.ByteArray;
-	
+
 	import mx.managers.PopUpManager;
-	
+
 	import core.Config;
 	import core.SEvent;
-	
+
 	import utils.CLoader;
 	import utils.FilesUtil;
 	import utils.GetSwfAllClass;
-	
+
 	import view.component.SLoading;
 	import view.component.SView;
 	import view.window.SWindowCreateProject;
@@ -145,29 +145,26 @@ package manager
 			}
 			else
 			{
-				if (!mCurrent.className)
+				if (!mCurrent || !mCurrent.className)
 				{
 					Config.alert("请先创建UI!");
 					return;
 				}
 			}
 
-			if (LocalShareManager.get("save_code"))
-				saveFile.nativePath = LocalShareManager.get("save_code");
+			saveFile.nativePath = Config.projectCodeUrl
 			saveFile.addEventListener(Event.SELECT, onSelect);
 			saveFile.addEventListener(Event.CANCEL, onExit);
 			saveFile.browseForDirectory("生成");
 
 			function onSelect(evt : Event) : void
 			{
-				var code : String;
 				if (isBath)
 					seachDirectoryList(Config.projectUrl);
 				else
 					saveCode(mCurrent);
 				saveFile.openWithDefaultApplication();
 				SLoading.getInstance().hide();
-				LocalShareManager.save("save_code", saveFile.nativePath);
 				//dispatch(SAVE_VIEW);
 			}
 
@@ -178,11 +175,11 @@ package manager
 
 			function saveCode(data : SView) : void
 			{
-				//var code : String = CodeUtils.getAsCode(data);
-				var saveDirectory : String = saveFile.nativePath + "\\" + String(data.extendsName.split(".").pop()).toLocaleLowerCase();
+				var code : String = SCodeManager.getAsCode(data);
+				var saveDirectory : String = saveFile.nativePath + File.separator + data.packageName;
 				var file : File = new File(saveDirectory);
 				!file.exists && file.createDirectory();
-//				FilesUtil.saveUTFBytesToFile(saveDirectory + "\\" + data.className + ".as", code);
+				FilesUtil.saveUTFBytesToFile(saveDirectory + File.separator + data.className + ".as", code);
 			}
 
 			function seachDirectoryList(url : String) : void
@@ -204,7 +201,8 @@ package manager
 					if (tmp_file.name.indexOf(".ui") == -1 || tmp_file.name.indexOf(".uip") >= 0)
 						continue;
 					bytes = FilesUtil.getBytesFromeFile(tmp_file.nativePath, true);
-//					viewData = SUiObject.parseByteArray(bytes, true);
+					viewData = new SView();
+					viewData.parserByteArray(bytes);
 					saveCode(viewData);
 				}
 			}

@@ -11,8 +11,8 @@ package utils
 
 	import core.Config;
 
-	import manager.LocalShareManager;
-	import manager.SEventManager;
+	import managers.LocalShareManager;
+	import managers.SEventManager;
 
 	public class CLoader
 	{

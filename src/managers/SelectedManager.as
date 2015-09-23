@@ -1,4 +1,4 @@
-package manager
+package managers
 {
 	import view.component.SDisplay;
 	import view.component.SLayer;

@@ -12,8 +12,8 @@
 
 			import core.Config;
 
-			import manager.SEventManager;
-			import manager.LocalShareManager;
+			import managers.SEventManager;
+			import managers.LocalShareManager;
 
 
 			protected override function init() : void

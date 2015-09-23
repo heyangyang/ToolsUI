@@ -6,7 +6,7 @@ package core
 	import flash.events.Event;
 	import flash.ui.Keyboard;
 	
-	import manager.SEventManager;
+	import managers.SEventManager;
 
 
 	public class SMenuController

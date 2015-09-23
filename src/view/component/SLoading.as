@@ -79,7 +79,7 @@ package view.component
 				return;
 			delayTime = getTimer();
 			text.text = mTxtArray[index];
-			if (++index > 3)
+			if (++index >= 3)
 				index = 0;
 		}
 

@@ -4,7 +4,7 @@ package view.component
 	import flash.events.Event;
 	import flash.utils.ByteArray;
 
-	import manager.SCodeManager;
+	import managers.SCodeManager;
 
 	public class SLayer extends SDisplay
 	{
@@ -146,6 +146,8 @@ package view.component
 		 */
 		public override function hitTestRectangle(rect : DisplayObject, list : Vector.<SDisplay>) : void
 		{
+			if (isLock)
+				return;
 			for each (var child : SDisplay in mChilds)
 			{
 				child.hitTestRectangle(rect, list);
@@ -154,6 +156,8 @@ package view.component
 
 		public function getChilds() : Vector.<SDisplay>
 		{
+			if (isLock)
+				return null;
 			return mChilds;
 		}
 

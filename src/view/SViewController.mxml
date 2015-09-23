@@ -18,9 +18,9 @@
 			import core.Config;
 			import core.SEvent;
 			
-			import manager.SCodeManager;
-			import manager.SEventManager;
-			import manager.SelectedManager;
+			import managers.SCodeManager;
+			import managers.SEventManager;
+			import managers.SelectedManager;
 			
 			import view.component.SController;
 			import view.component.SView;

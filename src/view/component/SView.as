@@ -6,15 +6,13 @@ package view.component
 	
 	import core.Config;
 	
-	import manager.SCodeManager;
+	import managers.SCodeManager;
 
 	public class SView extends SLayer
 	{
 		public var className : String;
 		public var extendsName : String;
 		public var packageName : String;
-		private var mWidth : int;
-		private var mHeight : int;
 		private var mResourceList : Array;
 
 		private var mLayers : Vector.<SLayer>;

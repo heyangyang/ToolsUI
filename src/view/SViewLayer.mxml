@@ -14,7 +14,7 @@
 
 			import core.SEvent;
 
-			import manager.SEventManager;
+			import managers.SEventManager;
 
 			import view.component.SLayer;
 			import view.component.SView;

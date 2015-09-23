@@ -5,7 +5,7 @@ package view.component
 
 	import core.Config;
 
-	import manager.SCodeManager;
+	import managers.SCodeManager;
 
 	public class SDisplay extends SDisPlayBase
 	{
@@ -15,6 +15,8 @@ package view.component
 		public var touchable : Boolean;
 		public var isLostRes : Boolean;
 		internal var mIndex : int;
+		protected var mWidth : int;
+		protected var mHeight : int;
 		protected var mParent : SLayer;
 
 		public function SDisplay()
@@ -75,6 +77,9 @@ package view.component
 			data.type = type;
 			data.visible = visible;
 			data.index = mIndex;
+			data.name = name;
+			data.width = width;
+			data.height = height;
 			return data;
 		}
 
@@ -87,6 +92,10 @@ package view.component
 			y = data.y;
 			mIndex = data.index;
 			visible = data.visible;
+			if (data.name)
+				name = data.name;
+			mWidth = data.width;
+			mHeight = data.height;
 		}
 
 		/**
@@ -135,7 +144,60 @@ package view.component
 
 		public function getAsCode(manager : SCodeManager) : String
 		{
-			return "";
+			var code : String = "";
+			var xml : XML = Config.getOtrXmlByType(type);
+			var packageName : String = xml.@pkgName;
+			var className : String = xml.@classType;
+			manager.importPackage(packageName);
+			//局部变量
+			if (name.indexOf("instance") == 0)
+				code += "var " + name + ":" + className + " = new " + className + "()" + SCodeManager.CODE_END;
+			//全局变量
+			else
+			{
+				manager.addPublicVariable(name, className);
+				code += name + " = new " + className + "()" + SCodeManager.CODE_END;
+			}
+			code += createXmlCode(Config.getXmlByType("component")[0].field);
+			code += createXmlCode(Config.getOtrXmlByType(type).field);
+			return code;
+		}
+
+		protected function createXmlCode(xmlList : XMLList) : String
+		{
+			var code : String = "";
+			var filedName : String;
+			var label : String;
+			for each (var xml : XML in xmlList)
+			{
+				label = xml.@label;
+				filedName = xml.@name;
+				if (label == "")
+					continue;
+				if (this[filedName] is Boolean)
+					code += addChildField(label, this[filedName]);
+				else if (this[filedName] is String && this[filedName].indexOf("0x") == -1)
+					code += addChildField(label, "'" + this[filedName] + "'");
+				else
+					code += addChildField(label, this[filedName]);
+			}
+			return code;
+		}
+
+
+		override public function get width() : Number
+		{
+			return mDisplay ? mDisplay.width : mWidth;
+		}
+
+		override public function get height() : Number
+		{
+			return mDisplay ? mDisplay.height : mHeight;
+		}
+
+		public function addChildField(field : String, value : *) : String
+		{
+			return name + "." + field + " = " + value + ";\n";
 		}
 	}
 }

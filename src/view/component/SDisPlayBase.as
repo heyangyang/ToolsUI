@@ -9,7 +9,7 @@ package view.component
 
 	public class SDisPlayBase extends Sprite
 	{
-		private var mDisplay : DisplayObject;
+		internal var mDisplay : DisplayObject;
 		private var transformTool : TransformTool;
 		private var mSelected : Boolean;
 
