@@ -43,6 +43,7 @@ package view.component
 		private var mLastMouseY : Number;
 		private var mStartMouseX : Number;
 		private var mStartMouseY : Number;
+		private var mIsClick : Boolean;
 		/**
 		 * 是否按下了shift
 		 */
@@ -65,6 +66,7 @@ package view.component
 		 * 剪贴列表
 		 */
 		private var mCopyList : Vector.<SDisplay> = new Vector.<SDisplay>();
+
 
 		public function SController()
 		{
@@ -107,6 +109,7 @@ package view.component
 		 */
 		private function onDownHandler(evt : MouseEvent) : void
 		{
+			mIsClick = true;
 			var child : SDisplay = evt.target as SDisplay;
 			mStartMouseX = mLastMouseX = mouseX;
 			mStartMouseY = mLastMouseY = mouseY;
@@ -129,7 +132,7 @@ package view.component
 		private function onMoveHandler(evt : MouseEvent) : void
 		{
 			//是否按下了鼠标主键
-			if (!evt.buttonDown)
+			if (!mIsClick)
 				return;
 			//如果按下了空格，则移动画布
 			if (mIsDownSpaceKey)
@@ -165,6 +168,7 @@ package view.component
 		 */
 		private function onUpHandler(evt : MouseEvent) : void
 		{
+			mIsClick = false;
 			//框选组件
 			if (mIsDrawing)
 			{
@@ -303,7 +307,7 @@ package view.component
 
 		private function onRollOut(evt : Event) : void
 		{
-			mIsDownShiftKey = isDownSpaceKey = false;
+			mIsClick = mIsDownShiftKey = isDownSpaceKey = false;
 			mDragAnimation.graphics.clear();
 			stage.removeEventListener(KeyboardEvent.KEY_DOWN, onKeyDownHandler);
 			stage.removeEventListener(KeyboardEvent.KEY_UP, onKeyUpHandler);
